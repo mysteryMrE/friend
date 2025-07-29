@@ -1,188 +1,123 @@
-import pyautogui
-import random
 import tkinter as tk
-
-msg = "Hello Cat!"
-print(msg)
-
-# Global variables for cat's position
-# These will now be the single source of truth for the cat's coordinates.
-x = 1400  # Initial X position
-y = 150  # Initial Y position
-
-cycle = 0
-check = 1
-idle_num = [1, 2, 3, 4]
-sleep_num = [10, 11, 12, 13, 15]
-walk_left = [6, 7]
-walk_right = [8, 9]
-event_number = random.randrange(1, 3, 1)
-impath = "D:\\Dokumentumok\\SCHOOL\\pets\\"
-
-# Variables to store mouse click position for dragging
-start_drag_x = 0
-start_drag_y = 0
+import random
+from pet_states.idle import IdleState
 
 
-# transfer random no. to event
-# Now, `event` does not need to pass `x` or `y` because `update` will use global `x` and `y`.
-def event(cycle, check, event_number):
-    if event_number in idle_num:
-        check = 0
-        print("idle")
-        window.after(400, update, cycle, check, event_number)
-    elif event_number == 5:
-        check = 1
-        print("from idle to sleep")
-        window.after(100, update, cycle, check, event_number)
-    elif event_number in walk_left:
-        check = 4
-        print("walking towards left")
-        window.after(100, update, cycle, check, event_number)
-    elif event_number in walk_right:
-        check = 5
-        print("walking towards right")
-        window.after(100, update, cycle, check, event_number)
-    elif event_number in sleep_num:
-        check = 2
-        print("sleep")
-        window.after(1000, update, cycle, check, event_number)
-    elif event_number == 14:
-        check = 3
-        print("from sleep to idle")
-        window.after(100, update, cycle, check, event_number)
+class Pet:
+    def __init__(self, window, label, impath):
+        self.window = window
+        self.label = label
+        self.impath = impath
 
+        self.idle_frames = [
+            tk.PhotoImage(file=self.impath + "idle.gif", format="gif -index %i" % (i))
+            for i in range(5)
+        ]
+        self.idle_to_sleep_frames = [
+            tk.PhotoImage(
+                file=self.impath + "idle_to_sleep.gif", format="gif -index %i" % (i)
+            )
+            for i in range(8)
+        ]
+        self.sleep_frames = [
+            tk.PhotoImage(file=self.impath + "sleep.gif", format="gif -index %i" % (i))
+            for i in range(3)
+        ]
+        self.sleep_to_idle_frames = [
+            tk.PhotoImage(
+                file=self.impath + "sleep_to_idle.gif", format="gif -index %i" % (i)
+            )
+            for i in range(8)
+        ]
 
-# making gif work
-def gif_work(cycle, frames, event_number, first_num, last_num):
-    if cycle < len(frames) - 1:
-        cycle += 1
-    else:
-        cycle = 0
-        event_number = random.randrange(first_num, last_num + 1, 1)
-    return cycle, event_number
+        self.walk_left_frames = [
+            tk.PhotoImage(
+                file=self.impath + "walking_left.gif", format="gif -index %i" % (i)
+            )
+            for i in range(8)
+        ]
+        self.walk_right_frames = [
+            tk.PhotoImage(
+                file=self.impath + "walking_right.gif", format="gif -index %i" % (i)
+            )
+            for i in range(8)
+        ]
 
+        # Define the event numbers associated with actions (can be properties or constants)
+        self.idle_events = [1, 2, 3, 4]
+        self.sleep_events = [10, 11, 12, 13, 15]
+        self.walk_left_events = [6, 7]
+        self.walk_right_events = [8, 9]
 
-# `update` now uses global `x` and `y` for position
-def update(cycle, check, event_number):
-    global x, y  # Declare x and y as global so we can modify them directly
+        self._current_state = None
+        self.set_state(IdleState(self))  # Set initial state
 
-    # Get the current animation frame
-    frame = None
-    if check == 0:  # idle
-        frame = idle[cycle]
-        cycle, event_number = gif_work(cycle, idle, event_number, 1, 9)
-    elif check == 1:  # idle to sleep
-        frame = idle_to_sleep[cycle]
-        cycle, event_number = gif_work(cycle, idle_to_sleep, event_number, 10, 10)
-    elif check == 2:  # sleep
-        frame = sleep[cycle]
-        cycle, event_number = gif_work(cycle, sleep, event_number, 10, 15)
-    elif check == 3:  # sleep to idle
-        frame = sleep_to_idle[cycle]
-        cycle, event_number = gif_work(cycle, sleep_to_idle, event_number, 1, 1)
-    elif check == 4:  # walk toward left
-        frame = walk_positive[cycle]
-        cycle, event_number = gif_work(cycle, walk_positive, event_number, 1, 9)
-        x -= 3  # Modify global x for walking
-    elif check == 5:  # walk towards right
-        frame = walk_negative[cycle]
-        cycle, event_number = gif_work(cycle, walk_negative, event_number, 1, 9)
-        x += 3  # Modify global x for walking (corrected from x -=-3)
+        self.x = 1400  # Global x/y now belongs to the pet object
+        self.y = 150
+        self.cycle = 0
+        self.event_number = random.randrange(1, 3, 1)  # Initial random event
 
-    # Ensure x and y are integers before applying to geometry
-    x_int = int(x)
-    y_int = int(y)
+        # Store mouse click position for dragging
+        self.start_drag_x = 0
+        self.start_drag_y = 0
 
-    # Use global x and y to set window position
-    window.geometry(f"100x100+{x_int}+{y_int}")
-    label.configure(image=frame)
-    # Debug print: See what coordinates update is applying
-    print(
-        f"Update: Applying X: {x_int}, Y: {y_int} (check: {check}, event_number: {event_number})"
-    )
+    def set_state(self, new_state):
+        print(
+            f"Transitioning from {type(self._current_state).__name__} to {type(new_state).__name__}"
+        )
+        self._current_state = new_state
+        self.cycle = 0  # Reset cycle when state changes
 
-    # Recursively call event, passing current state but not position
-    window.after(1, event, cycle, check, event_number)
+    # Wrapper for gif_work, so states don't need direct access to Tkinter specifics
+    def gif_work_wrapper(self, cycle, frames_list, first_num, last_num):
+        if cycle < len(frames_list) - 1:
+            cycle += 1
+        else:
+            cycle = 0
+            self.event_number = random.randrange(
+                first_num, last_num + 1, 1
+            )  # Update global event_number
+        return cycle, self.event_number, frames_list[cycle]  # Return the frame too
 
+    def update_pet(self):
+        # The main loop, less concerned with *how* to update, more with *what* to update
 
-# Function to close the program
-def close_program(event=None):
-    window.destroy()
+        # The state itself will decide if and how to transition
+        self._current_state.handle_event(self.event_number)
+        # Get the current frame and potentially update cycle/event_number from the current state
+        self.cycle, self.event_number, frame = self._current_state.update_animation(
+            self.cycle
+        )
 
+        # Get movement delta from the current state
+        delta_x, delta_y = self._current_state.get_movement_delta()
+        self.x += delta_x
+        self.y += delta_y
 
-# Functions for dragging
-def start_drag(event):
-    global start_drag_x, start_drag_y
-    # Store initial mouse position relative to the window
-    start_drag_x = event.x
-    start_drag_y = event.y
+        # Update window geometry and label image
+        self.window.geometry(f"100x100+{int(self.x)}+{int(self.y)}")
+        self.label.configure(image=frame)
+        print(
+            f"Update: X: {int(self.x)}, Y: {int(self.y)} (State: {type(self._current_state).__name__}, Event: {self.event_number})"
+        )
 
+        # Now, handle the next event based on the new event_number
 
-def do_drag(event):
-    global x, y  # Need to modify global x and y
+        # Schedule the next update
+        self.window.after(100, self.update_pet)  # Schedule next update directly
 
-    # Calculate new absolute position of the window
-    # window.winfo_x() and window.winfo_y() give the current window position on screen
-    new_x = window.winfo_x() + (event.x - start_drag_x)
-    new_y = window.winfo_y() + (event.y - start_drag_y)
+    # Dragging functions (can remain mostly the same, just update self.x/self.y)
+    def start_drag(self, event):
+        self.start_drag_x = event.x
+        self.start_drag_y = event.y
 
-    # Update global x and y with the new position (cast to int immediately)
-    x = int(new_x)
-    y = int(new_y)
+    def do_drag(self, event):
+        new_x = self.window.winfo_x() + (event.x - self.start_drag_x)
+        new_y = self.window.winfo_y() + (event.y - self.start_drag_y)
+        self.x = int(new_x)
+        self.y = int(new_y)
+        self.window.geometry(f"+{self.x}+{self.y}")
+        print(f"Drag: Setting X: {self.x}, Y: {self.y}")
 
-    # Set the window geometry immediately during drag
-    window.geometry(f"+{x}+{y}")
-    # Debug print: See what coordinates do_drag is setting
-    print(f"Drag: Setting X: {x}, Y: {y}")
-
-
-window = tk.Tk()
-# call buddy's action gif
-idle = [
-    tk.PhotoImage(file=impath + "idle.gif", format="gif -index %i" % (i))
-    for i in range(5)
-]  # idle gif
-idle_to_sleep = [
-    tk.PhotoImage(file=impath + "idle_to_sleep.gif", format="gif -index %i" % (i))
-    for i in range(8)
-]  # idle to sleep gif
-sleep = [
-    tk.PhotoImage(file=impath + "sleep.gif", format="gif -index %i" % (i))
-    for i in range(3)
-]  # sleep gif
-sleep_to_idle = [
-    tk.PhotoImage(file=impath + "sleep_to_idle.gif", format="gif -index %i" % (i))
-    for i in range(8)
-]  # sleep to idle gif
-walk_positive = [
-    tk.PhotoImage(file=impath + "walking_positive.gif", format="gif -index %i" % (i))
-    for i in range(8)
-]  # walk to left gif
-walk_negative = [
-    tk.PhotoImage(file=impath + "walking_negative.gif", format="gif -index %i" % (i))
-    for i in range(8)
-]  # walk to right gif
-
-# window configuration
-window.config(highlightbackground="black")
-label = tk.Label(window, bd=0, bg="black")
-
-# Bind Ctrl+P to close the program
-window.bind("<Control-p>", close_program)
-
-# Bind mouse events for dragging
-label.bind("<Button-1>", start_drag)  # Left mouse button press
-label.bind("<B1-Motion>", do_drag)  # Mouse motion while left button is held down
-
-# Make the window always on top
-window.attributes("-topmost", True)
-
-# Remove window decorations and set transparency
-window.overrideredirect(True)
-window.wm_attributes("-transparentcolor", "black")
-label.pack()
-
-# Initial call to update, it will then recursively call event and update.
-window.after(1, update, cycle, check, event_number)
-window.mainloop()
+    def close_program(self, event=None):
+        self.window.destroy()
