@@ -12,7 +12,8 @@ class Pet:
         self.idle_frames = [
             tk.PhotoImage(file=self.impath + "idle.gif", format="gif -index %i" % (i))
             for i in range(5)
-        ]
+            for _ in range(3)
+        ] * 2
         self.idle_to_sleep_frames = [
             tk.PhotoImage(
                 file=self.impath + "idle_to_sleep.gif", format="gif -index %i" % (i)
@@ -22,7 +23,8 @@ class Pet:
         self.sleep_frames = [
             tk.PhotoImage(file=self.impath + "sleep.gif", format="gif -index %i" % (i))
             for i in range(3)
-        ]
+            for _ in range(4)
+        ] * 2
         self.sleep_to_idle_frames = [
             tk.PhotoImage(
                 file=self.impath + "sleep_to_idle.gif", format="gif -index %i" % (i)
@@ -35,13 +37,13 @@ class Pet:
                 file=self.impath + "walking_left.gif", format="gif -index %i" % (i)
             )
             for i in range(8)
-        ]
+        ] * 2
         self.walk_right_frames = [
             tk.PhotoImage(
                 file=self.impath + "walking_right.gif", format="gif -index %i" % (i)
             )
             for i in range(8)
-        ]
+        ] * 2
 
         # Define the event numbers associated with actions (can be properties or constants)
         self.idle_events = [1, 2, 3, 4]
@@ -50,7 +52,7 @@ class Pet:
         self.walk_right_events = [8, 9]
 
         self._current_state = None
-        self.set_state(IdleState(self))  # Set initial state
+        self.set_state(IdleState(self), called_from="__init__")  # Set initial state
 
         self.x = 1400  # Global x/y now belongs to the pet object
         self.y = 150
@@ -61,23 +63,32 @@ class Pet:
         self.start_drag_x = 0
         self.start_drag_y = 0
 
-    def set_state(self, new_state):
+    def set_state(self, new_state, called_from=None):
         print(
-            f"Transitioning from {type(self._current_state).__name__} to {type(new_state).__name__}"
+            f"Transitioning from {type(self._current_state).__name__} to {type(new_state).__name__} (state change called from {called_from})"
         )
         self._current_state = new_state
         self.cycle = 0  # Reset cycle when state changes
 
     # Wrapper for gif_work, so states don't need direct access to Tkinter specifics
     def gif_work_wrapper(self, cycle, frames_list, first_num, last_num):
+        saved_cycle = cycle
         if cycle < len(frames_list) - 1:
             cycle += 1
+            saved_cycle = cycle
         else:
             cycle = 0
             self.event_number = random.randrange(
                 first_num, last_num + 1, 1
             )  # Update global event_number
-        return cycle, self.event_number, frames_list[cycle]  # Return the frame too
+            print(f"Event number updated to: {self.event_number}")
+        return (
+            cycle,
+            self.event_number,
+            frames_list[
+                saved_cycle
+            ],  # Return the last frame so the animation does not reset, it waits at the connection point
+        )
 
     def update_pet(self):
         # The main loop, less concerned with *how* to update, more with *what* to update

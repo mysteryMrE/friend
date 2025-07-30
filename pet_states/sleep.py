@@ -6,7 +6,9 @@ class SleepState(PetState):
         if event_number == 14:
             from pet_states.sleep_to_idle import SleepToIdleState
 
-            self._pet.set_state(SleepToIdleState(self._pet))
+            self._pet.set_state(
+                SleepToIdleState(self._pet), called_from="SleepState.handle_event"
+            )
         # Stays in sleep for other sleep_num events
         pass
 

@@ -8,7 +8,9 @@ class WalkLeftState(PetState):
         ):  # Transition back to idle or idle-to-sleep
             from pet_states.idle import IdleState
 
-            self._pet.set_state(IdleState(self._pet))
+            self._pet.set_state(
+                IdleState(self._pet), called_from="WalkLeftState.handle_event"
+            )
         # Other conditions as needed
         pass
 

@@ -6,7 +6,9 @@ class IdleToSleepState(PetState):
         if event_number == 10:
             from pet_states.sleep import SleepState
 
-            self._pet.set_state(SleepState(self._pet))
+            self._pet.set_state(
+                SleepState(self._pet), called_from="IdleToSleepState.handle_event"
+            )
         pass
 
     def update_animation(self, cycle):
