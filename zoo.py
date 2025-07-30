@@ -4,10 +4,10 @@ import tkinter as tk
 
 window = tk.Tk()
 
-impath = "D:\\Dokumentumok\\SCHOOL\\pets\\assets\\images\\"
+
 # Create the pet object, passing necessary Tkinter elements
 label = tk.Label(window, bd=0, bg="black")
-pet = Pet(window, label, impath)
+pet = Pet(window, label)
 
 window.config(highlightbackground="black")
 label.bind("<Button-1>", pet.start_drag)
