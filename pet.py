@@ -1,6 +1,6 @@
 import tkinter as tk
 import random
-from pet_animations.idle import IdleState
+from pet_animations.idle import IdleAnimation
 
 
 class Pet:
@@ -8,11 +8,6 @@ class Pet:
         self.window = window
         self.label = label
 
-        # self.idle_frames = [
-        #     tk.PhotoImage(file=self.impath + "idle.gif", format="gif -index %i" % (i))
-        #     for i in range(5)
-        #     for _ in range(3)
-        # ] * 2
         # self.idle_to_sleep_
         # self.sleep_frames = [
         #     tk.PhotoImage(file=self.impath + "sleep.gif", format="gif -index %i" % (i))
@@ -46,7 +41,7 @@ class Pet:
         self.walk_right_events = [8, 9]
 
         self._current_state = None
-        self.set_state(IdleState(), called_from="__init__")  # Set initial state
+        self.set_state(IdleAnimation(), called_from="__init__")  # Set initial state
 
         self.x = 1400  # Global x/y now belongs to the pet object
         self.y = 150

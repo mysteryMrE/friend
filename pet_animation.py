@@ -3,51 +3,40 @@ import tkinter as tk
 
 
 class PetAnimation(ABC):
-    def __init__(self, ERROR):  # LETS USE PARAMETERS INSTED OF PROPERTIES
+    def __init__(
+        self,
+        speed_x: int,
+        speed_y: int,
+        gif_name: str,
+        gif_length: int,
+        animation_speed: float,
+        animation_repeat: int,
+    ):
         self.cycle = 0
         self.imgpath = "D:\\Dokumentumok\\SCHOOL\\pets\\assets\\images\\"
+        slow = round(1.0 / animation_speed)
+        if slow < 1:
+            slow = 1
         self.frames = [
             tk.PhotoImage(
-                file=self.imgpath + self.gif_name + ".gif", format="gif -index %i" % (i)
+                file=self.imgpath + gif_name + ".gif", format="gif -index %i" % (i)
             )
-            for i in range(self.gif_length)
-            for _ in range(self.animation_speed)
-        ] * self.animation_repeat
+            for i in range(gif_length)
+            for _ in range(slow)
+        ] * animation_repeat
+        self.speed_x = speed_x
+        self.speed_y = speed_y
+        self.gif_name = gif_name
+        self.gif_length = gif_length
+        self.animation_speed = animation_speed
+        self.animation_repeat = animation_repeat
 
-    @property
-    @abstractmethod
-    def gif_length(self):
-        pass
-
-    @property
-    @abstractmethod
-    def gif_name(self):
-        pass
-
-    @property
-    @abstractmethod
-    def animation_speed(self):
-        pass
-
-    @property
-    @abstractmethod
-    def animation_repeat(self):
-        pass
-
-    @property
-    @abstractmethod
-    def speed_x(self):
-        pass
-
-    @property
-    @abstractmethod
-    def speed_y(self):
-        pass
-
-    @abstractmethod
     def update_animation(self):
-        # Return the current frame and update cycle/event_number for animation
-        pass
+        if self.is_finished():
+            return self.frames[-1], True
+        frame = self.frames[self.cycle % len(self.frames)]
+        self.cycle += 1
+        return frame, self.is_finished()
 
     def is_finished(self):
         return self.cycle >= len(self.frames)

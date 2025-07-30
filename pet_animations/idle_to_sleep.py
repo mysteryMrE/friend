@@ -1,16 +1,13 @@
-# from pet_animations import PetAnimation
-# import tkinter as tk
+from pet_animation import PetAnimation
 
 
-# class IdleToSleepState(PetAnimation):
-
-#     @property
-#     def speed_x(self):
-#         return 0
-
-#     @property
-#     def speed_y(self):
-#         return 0
-
-#     def update_animation(self):
-#         pass
+class IdleToSleepAnimation(PetAnimation):
+    def __init__(self):
+        super().__init__(
+            speed_x=0,
+            speed_y=0,
+            gif_name="idle_to_sleep",
+            gif_length=5,
+            animation_speed=0.3,
+            animation_repeat=1,
+        )
