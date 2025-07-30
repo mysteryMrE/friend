@@ -7,7 +7,7 @@ class IdleToSleepAnimation(PetAnimation):
             speed_x=0,
             speed_y=0,
             gif_name="idle_to_sleep",
-            gif_length=5,
-            animation_speed=0.3,
+            gif_length=8,
+            animation_speed=1,
             animation_repeat=1,
         )

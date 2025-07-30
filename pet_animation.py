@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 import tkinter as tk
 
 
+# TODO: not a clean thing to have abstract class without abstract methods, but it is to stop instantiation
 class PetAnimation(ABC):
     def __init__(
         self,
@@ -14,7 +15,11 @@ class PetAnimation(ABC):
     ):
         self.cycle = 0
         self.imgpath = "D:\\Dokumentumok\\SCHOOL\\pets\\assets\\images\\"
-        slow = round(1.0 / animation_speed)
+        self.gif_name = gif_name
+        self.gif_length = gif_length
+        self.animation_speed = animation_speed
+        self.animation_repeat = animation_repeat
+        slow = round(1.0 / self.animation_speed)
         if slow < 1:
             slow = 1
         self.frames = [
@@ -26,10 +31,6 @@ class PetAnimation(ABC):
         ] * animation_repeat
         self.speed_x = speed_x
         self.speed_y = speed_y
-        self.gif_name = gif_name
-        self.gif_length = gif_length
-        self.animation_speed = animation_speed
-        self.animation_repeat = animation_repeat
 
     def update_animation(self):
         if self.is_finished():

@@ -1,6 +1,11 @@
 import tkinter as tk
 import random
 from pet_animations.idle import IdleAnimation
+from pet_animations.idle_to_sleep import IdleToSleepAnimation
+from pet_animations.sleep import SleepAnimation
+from pet_animations.sleep_to_idle import SleepToIdleAnimation
+from pet_animations.walk_left import WalkLeftAnimation
+from pet_animations.walk_right import WalkRightAnimation
 
 
 class Pet:
@@ -8,44 +13,38 @@ class Pet:
         self.window = window
         self.label = label
 
-        # self.idle_to_sleep_
-        # self.sleep_frames = [
-        #     tk.PhotoImage(file=self.impath + "sleep.gif", format="gif -index %i" % (i))
-        #     for i in range(3)
-        #     for _ in range(4)
-        # ] * 2
-        # self.sleep_to_idle_frames = [
-        #     tk.PhotoImage(
-        #         file=self.impath + "sleep_to_idle.gif", format="gif -index %i" % (i)
-        #     )
-        #     for i in range(8)
-        # ]
-
-        # self.walk_left_frames = [
-        #     tk.PhotoImage(
-        #         file=self.impath + "walking_left.gif", format="gif -index %i" % (i)
-        #     )
-        #     for i in range(8)
-        # ] * 2
-        # self.walk_right_frames = [
-        #     tk.PhotoImage(
-        #         file=self.impath + "walking_right.gif", format="gif -index %i" % (i)
-        #     )
-        #     for i in range(8)
-        # ] * 2
-
-        # Define the event numbers associated with actions (can be properties or constants)
-        self.idle_events = [1, 2, 3, 4]
-        self.sleep_events = [10, 11, 12, 13, 15]
-        self.walk_left_events = [6, 7]
-        self.walk_right_events = [8, 9]
+        self.animation_order = {
+            IdleAnimation: {
+                "nexts": {
+                    WalkLeftAnimation: 0.4,
+                    WalkRightAnimation: 0.4,
+                    IdleToSleepAnimation: 0.2,
+                }
+            },
+            IdleToSleepAnimation: {"nexts": {SleepAnimation: 1}},
+            SleepAnimation: {"nexts": {SleepToIdleAnimation: 1}},
+            SleepToIdleAnimation: {"nexts": {IdleAnimation: 1}},
+            WalkLeftAnimation: {
+                "nexts": {
+                    IdleAnimation: 0.3,
+                    WalkLeftAnimation: 0.2,
+                    WalkRightAnimation: 0.5,
+                }
+            },
+            WalkRightAnimation: {
+                "nexts": {
+                    IdleAnimation: 0.2,
+                    WalkLeftAnimation: 0.3,
+                    WalkRightAnimation: 0.5,
+                }
+            },
+        }
 
         self._current_state = None
         self.set_state(IdleAnimation(), called_from="__init__")  # Set initial state
 
-        self.x = 1400  # Global x/y now belongs to the pet object
+        self.x = 1400
         self.y = 150
-        self.event_number = random.randrange(1, 3, 1)  # Initial random event
 
         # Store mouse click position for dragging
         self.start_drag_x = 0
@@ -57,16 +56,18 @@ class Pet:
         )
         self._current_state = new_state
 
+        if self._current_state:
+            first_frame = self._current_state.update_animation()[0]
+            self.label.configure(image=first_frame)
+            # Force an immediate update to prevent flickering
+            self.label.update_idletasks()
+
     def update_pet(self):
-        # The main loop, less concerned with *how* to update, more with *what* to update
+        if not self._current_state:
+            self.window.after(100, self.update_pet)
+            return
 
-        # The state itself will decide if and how to transition
         frame, finished_animation = self._current_state.update_animation()
-
-        if finished_animation:
-            # json or enum
-            # to be implemented
-            pass
 
         # Get movement delta from the current state
         delta_x, delta_y = self._current_state.get_movement_delta()
@@ -77,12 +78,28 @@ class Pet:
         self.window.geometry(f"100x100+{int(self.x)}+{int(self.y)}")
         self.label.configure(image=frame)
         print(
-            f"Update: X: {int(self.x)}, Y: {int(self.y)} (State: {type(self._current_state).__name__}, Event: {self.event_number})"
+            f"Update: X: {int(self.x)}, Y: {int(self.y)} (State: {type(self._current_state).__name__}))"
         )
 
         # Now, handle the next event based on the new event_number
 
-        # Schedule the next update
+        if finished_animation:
+            new_animation_pool = self.animation_order[type(self._current_state)][
+                "nexts"
+            ]
+            animations = list(new_animation_pool.keys())
+            weights = list(new_animation_pool.values())
+            new_state = random.choices(animations, weights=weights, k=1)[0]
+            print(f"new state: {type(new_state)} and {new_state}")
+            self.set_state(new_state(), called_from="update_pet")
+
+            # def transition_to_next():
+            #     self.set_state(new_state(), called_from="delayed_transition")
+            #     # TODO: THIS NEEDS TO BE HERE OR IT WILL FLICKER BUT WHYYYY??? ITS ALSO OK IF I DO THE SET_STATE CODE
+            #     self.update_pet()
+            # self.window.after(100, transition_to_next)
+            # return  # Don't schedule regular update, transition will handle it
+
         self.window.after(100, self.update_pet)  # Schedule next update directly
 
     # Dragging functions (can remain mostly the same, just update self.x/self.y)

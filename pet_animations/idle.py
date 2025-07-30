@@ -8,6 +8,6 @@ class IdleAnimation(PetAnimation):
             speed_y=0,
             gif_name="idle",
             gif_length=5,
-            animation_speed=0.3,
-            animation_repeat=1,
+            animation_speed=0.5,
+            animation_repeat=2,
         )
