@@ -1,5 +1,6 @@
 import random
 from pet_animation import PetAnimation
+import tkinter as tk
 import time
 
 
@@ -9,7 +10,7 @@ class TalkAnimation(PetAnimation):
         super().__init__(
             speed_x=0,
             speed_y=0,
-            resource_name="talking.gif",
+            resource_name="talk.gif",
             resource_length=2,
             animation_speed=0.2,
             animation_repeat=1,
@@ -26,6 +27,12 @@ class TalkAnimation(PetAnimation):
             "Where's my toy?",
             "Let's go for a walk!",
         ]
+        self.ending_image = tk.PhotoImage(
+            file="D:\\Dokumentumok\\SCHOOL\\pets\\assets\\images\\"
+            + "talk_stopped.gif",
+            format="gif -index 0",
+        )
+
         self.current_message = None
         self.current_message_index = 0
         self.last_message_time = time.time()
@@ -36,8 +43,8 @@ class TalkAnimation(PetAnimation):
         self.full_message_display_time = 2
 
     def update_animation(self):
-        if self.is_finished():
-            return self.frames[-1], True, self.get_display_message()
+        if self.message_sent:
+            return self.ending_image, self.is_finished(), self.get_display_message()
         frame = self.frames[self.cycle % len(self.frames)]
         self.cycle += 1
         return frame, self.is_finished(), self.get_display_message()

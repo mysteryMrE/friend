@@ -27,10 +27,8 @@ class Pet:
         self.animation_order = {
             TalkAnimation: {
                 "nexts": {
-                    WalkLeftAnimation: 0.2,
-                    WalkRightAnimation: 0.2,
-                    IdleAnimation: 0.2,
-                    TalkAnimation: 0.4,
+                    IdleAnimation: 0.7,
+                    TalkAnimation: 0.3,
                 }
             },
             IdleAnimation: {
@@ -100,7 +98,22 @@ class Pet:
         self.window.config(bg="black")
         self.window.geometry(f"400x400+{int(self.x)}+{int(self.y)}")
         self.label.configure(image=frame)
-        self.message_label.configure(text=message)
+
+        # Clear previous drawings and update the speech bubble
+        self.message_label.delete("all")
+        if message:
+            # Create the speech bubble rectangle
+            self.message_label.create_rectangle(
+                10, 10, 290, 80, fill="white", outline="black", width=2
+            )
+            # Create the triangle pointing down
+            self.message_label.create_polygon(
+                140, 80, 160, 80, 150, 95, fill="white", outline="black", width=2
+            )
+            # Add the text to the canvas
+            self.message_label.create_text(
+                150, 45, text=message, font=("Arial", 10), fill="black", width=270
+            )
         # if message == "":
         #     print("No message to display")
 
@@ -145,6 +158,31 @@ class Pet:
         self.y = int(new_y)
         self.window.geometry(f"+{self.x}+{self.y}")
         print(f"Drag: Setting X: {self.x}, Y: {self.y}")
+
+    # def _create_rounded_rectangle(self, canvas, x1, y1, x2, y2, radius, **kwargs):
+    #     """Draw a rounded rectangle on a canvas."""
+    #     # Draw the four corner arcs
+    #     canvas.create_arc(
+    #         x1, y1, x1 + 2 * radius, y1 + 2 * radius, start=90, extent=90, **kwargs
+    #     )
+    #     canvas.create_arc(
+    #         x2 - 2 * radius, y1, x2, y1 + 2 * radius, start=0, extent=90, **kwargs
+    #     )
+    #     canvas.create_arc(
+    #         x1, y2 - 2 * radius, x1 + 2 * radius, y2, start=180, extent=90, **kwargs
+    #     )
+    #     canvas.create_arc(
+    #         x2 - 2 * radius, y2 - 2 * radius, x2, y2, start=270, extent=90, **kwargs
+    #     )
+    #     # Draw the four connecting lines
+    #     canvas.create_line(x1 + radius, y1, x2 - radius, y1, **kwargs)
+    #     canvas.create_line(x1 + radius, y2, x2 - radius, y2, **kwargs)
+    #     canvas.create_line(x1, y1 + radius, x1, y2 - radius, **kwargs)
+    #     canvas.create_line(x2, y1 + radius, x2, y2 - radius, **kwargs)
+    #     # Draw the center rectangle to fill the color
+    #     canvas.create_rectangle(
+    #         x1 + radius, y1 + radius, x2 - radius, y2 - radius, **kwargs
+    #     )
 
     def close_program(self, event=None):
         self.window.destroy()
