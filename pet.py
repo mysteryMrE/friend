@@ -9,7 +9,7 @@ from pet_animations.walk_right import WalkRightAnimation
 
 
 class Pet:
-    def __init__(self, window, label):
+    def __init__(self, window, label, frequency, x, y):
         self.window = window
         self.label = label
 
@@ -43,12 +43,14 @@ class Pet:
         self._current_state = None
         self.set_state(IdleAnimation(), called_from="__init__")  # Set initial state
 
-        self.x = 1400
-        self.y = 150
+        self.x = x
+        self.y = y
 
         # Store mouse click position for dragging
         self.start_drag_x = 0
         self.start_drag_y = 0
+
+        self.frequency = frequency
 
     def set_state(self, new_state, called_from=None):
         print(
