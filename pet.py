@@ -27,8 +27,8 @@ class Pet:
         self.animation_order = {
             TalkAnimation: {
                 "nexts": {
-                    IdleAnimation: 0.7,
-                    TalkAnimation: 0.3,
+                    IdleAnimation: 0.5,
+                    TalkAnimation: 0.5,
                 }
             },
             IdleAnimation: {
@@ -36,7 +36,7 @@ class Pet:
                     WalkLeftAnimation: 0.2,
                     WalkRightAnimation: 0.2,
                     IdleToSleepAnimation: 0.2,
-                    TalkAnimation: 0.4,
+                    TalkAnimation: 100,
                 }
             },
             IdleToSleepAnimation: {"nexts": {SleepAnimation: 1}},
@@ -74,6 +74,12 @@ class Pet:
         print(
             f"Transitioning from {type(self._current_state).__name__} to {type(new_state).__name__} (state change called from {called_from})"
         )
+
+        # Clean up previous state if it has cleanup method
+        if hasattr(self._current_state, "cleanup"):
+            print(f"Calling cleanup on {type(self._current_state).__name__}")
+            self._current_state.cleanup()
+
         self._current_state = new_state
 
         if self._current_state:
