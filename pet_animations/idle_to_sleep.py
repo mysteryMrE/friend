@@ -6,8 +6,8 @@ class IdleToSleepAnimation(PetAnimation):
         super().__init__(
             speed_x=0,
             speed_y=0,
-            gif_name="idle_to_sleep",
-            gif_length=8,
+            resource_name="idle_to_sleep.gif",
+            resource_length=8,
             animation_speed=1,
             animation_repeat=1,
         )

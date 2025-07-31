@@ -6,8 +6,8 @@ class SleepAnimation(PetAnimation):
         super().__init__(
             speed_x=0,
             speed_y=0,
-            gif_name="sleep",
-            gif_length=3,
+            resource_name="sleep.gif",
+            resource_length=3,
             animation_speed=0.3,
             animation_repeat=2,
         )

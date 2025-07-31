@@ -4,21 +4,41 @@ from pet_animations.idle import IdleAnimation
 from pet_animations.idle_to_sleep import IdleToSleepAnimation
 from pet_animations.sleep import SleepAnimation
 from pet_animations.sleep_to_idle import SleepToIdleAnimation
+from pet_animations.talk import TalkAnimation
 from pet_animations.walk_left import WalkLeftAnimation
 from pet_animations.walk_right import WalkRightAnimation
+from pet_animation import PetAnimation
 
 
 class Pet:
-    def __init__(self, window, label, frequency, x, y):
+    def __init__(
+        self,
+        starting_state: PetAnimation,
+        window,
+        label,
+        message_label,
+        frequency: int,
+        x: int,
+        y: int,
+    ):
         self.window = window
         self.label = label
-
+        self.message_label = message_label
         self.animation_order = {
+            TalkAnimation: {
+                "nexts": {
+                    WalkLeftAnimation: 0.2,
+                    WalkRightAnimation: 0.2,
+                    IdleAnimation: 0.2,
+                    TalkAnimation: 0.4,
+                }
+            },
             IdleAnimation: {
                 "nexts": {
-                    WalkLeftAnimation: 0.4,
-                    WalkRightAnimation: 0.4,
+                    WalkLeftAnimation: 0.2,
+                    WalkRightAnimation: 0.2,
                     IdleToSleepAnimation: 0.2,
+                    TalkAnimation: 0.4,
                 }
             },
             IdleToSleepAnimation: {"nexts": {SleepAnimation: 1}},
@@ -41,7 +61,7 @@ class Pet:
         }
 
         self._current_state = None
-        self.set_state(IdleAnimation(), called_from="__init__")  # Set initial state
+        self.set_state(starting_state(), called_from="__init__")  # Set initial state
 
         self.x = x
         self.y = y
@@ -69,7 +89,7 @@ class Pet:
             self.window.after(100, self.update_pet)
             return
 
-        frame, finished_animation = self._current_state.update_animation()
+        frame, finished_animation, message = self._current_state.update_animation()
 
         # Get movement delta from the current state
         delta_x, delta_y = self._current_state.get_movement_delta()
@@ -77,8 +97,17 @@ class Pet:
         self.y += delta_y
 
         # Update window geometry and label image
-        self.window.geometry(f"100x100+{int(self.x)}+{int(self.y)}")
+        self.window.config(bg="black")
+        self.window.geometry(f"400x400+{int(self.x)}+{int(self.y)}")
         self.label.configure(image=frame)
+        self.message_label.configure(text=message)
+        # if message == "":
+        #     print("No message to display")
+
+        #     # self.message_label.pack_forget()
+        # else:
+
+        #     #self.message_label.pack()
         print(
             f"Update: X: {int(self.x)}, Y: {int(self.y)} (State: {type(self._current_state).__name__}))"
         )
