@@ -16,7 +16,7 @@ class TalkAnimation(PetAnimation):
         super().__init__(
             speed_x=0,
             speed_y=0,
-            resource_name="talk.gif",
+            resource_name="talk_transparent.gif",
             resource_length=2,
             animation_speed=0.2,
             animation_repeat=1,
@@ -39,7 +39,7 @@ class TalkAnimation(PetAnimation):
         ]
         self.ending_image = tk.PhotoImage(
             file="D:\\Dokumentumok\\SCHOOL\\pets\\assets\\images\\"
-            + "talk_stopped.gif",
+            + "talk_stopped_transparent.gif",
             format="gif -index 0",
         )
 
@@ -47,7 +47,7 @@ class TalkAnimation(PetAnimation):
         self.current_message_index = 0
         self.last_message_time = time.time()
         self.last_message = None
-        self.message_interval = 0.3
+        self.message_interval = 0.1
         self.separators = [" ", "!", "?", ".", ",", ";", ":", "'"]
         self.message_sent = False
         self.full_message_display_time = 2
@@ -104,9 +104,7 @@ class TalkAnimation(PetAnimation):
                 )
 
                 # Add a prefix to make it more obvious when testing
-                tts_message = (
-                    f"Animation {self.animation_id[:4]} says: {self.current_message}"
-                )
+                tts_message = f"{self.current_message}"
                 print(
                     f"TalkAnimation {self.animation_id}: TTS message will be: {tts_message}"
                 )

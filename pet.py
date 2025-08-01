@@ -101,7 +101,7 @@ class Pet:
         self.y += delta_y
 
         # Update window geometry and label image
-        self.window.config(bg="black")
+        self.window.config(bg="#7F007F")
         self.window.geometry(f"400x400+{int(self.x)}+{int(self.y)}")
         self.label.configure(image=frame)
 
@@ -118,7 +118,7 @@ class Pet:
             )
             # Add the text to the canvas
             self.message_label.create_text(
-                150, 45, text=message, font=("Arial", 10), fill="black", width=270
+                150, 45, text=message, font=("Arial", 12), fill="black", width=270
             )
         # if message == "":
         #     print("No message to display")

@@ -9,11 +9,11 @@ window = tk.Tk()
 
 # Use a Canvas for the speech bubble to allow drawing custom shapes
 speech_bubble_canvas = tk.Canvas(
-    window, width=300, height=100, bg="black", highlightthickness=0
+    window, width=300, height=100, bg="#7F007F", highlightthickness=0
 )
 
 # Create the pet object, passing necessary Tkinter elements
-label = tk.Label(window, bd=0, bg="black")
+label = tk.Label(window, bd=0, bg="#7F007F")
 pet = Pet(
     starting_state=IdleAnimation,
     window=window,
@@ -24,13 +24,13 @@ pet = Pet(
     y=150,
 )
 
-window.config(highlightbackground="black")
+window.config(highlightbackground="#7F007F")
 label.bind("<Control-Button-1>", pet.start_drag)
 label.bind("<Control-B1-Motion>", pet.do_drag)
 window.bind("<Control-p>", pet.close_program)
 window.attributes("-topmost", True)
 window.overrideredirect(True)
-window.wm_attributes("-transparentcolor", "black")
+window.wm_attributes("-transparentcolor", "#7F007F")
 label.place(x=150, y=150)  # Center the 100x100 cat image in the 400x400 window
 speech_bubble_canvas.place(x=200, y=40, anchor="n")  # Position canvas above the cat
 

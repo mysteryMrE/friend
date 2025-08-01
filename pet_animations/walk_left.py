@@ -6,7 +6,7 @@ class WalkLeftAnimation(PetAnimation):
         super().__init__(
             speed_x=-3,
             speed_y=0,
-            resource_name="walking_left.gif",
+            resource_name="walking_left_transparent.gif",
             resource_length=8,
             animation_speed=1,
             animation_repeat=3,
