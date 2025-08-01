@@ -93,8 +93,9 @@ class Pet:
                 self.pet_item = self.label.create_image(
                     0, 0, image=first_frame, anchor="nw"
                 )
-            # Force an immediate update to prevent flickering
+            # Force immediate canvas update to prevent flickering
             self.label.update_idletasks()
+            self.window.update_idletasks()
 
     def update_pet(self):
         if not self._current_state:
@@ -114,6 +115,8 @@ class Pet:
         # Update pet image on canvas (transparent cat over bed)
         if self.pet_item:
             self.label.itemconfig(self.pet_item, image=frame)
+            # Force immediate canvas update to prevent flickering
+            self.label.update_idletasks()
 
         # Update speech bubble
         if message:
@@ -153,7 +156,7 @@ class Pet:
         self.y = int(new_y)
 
         # Update window position (this moves both cat and bed together)
-        self.window.geometry(f"200x200+{self.x}+{self.y}")
+        self.window.geometry(f"300x250+{self.x}+{self.y}")
         print(f"Drag: Setting X: {self.x}, Y: {self.y}")
 
     # def _create_rounded_rectangle(self, canvas, x1, y1, x2, y2, radius, **kwargs):
