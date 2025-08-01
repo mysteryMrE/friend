@@ -17,30 +17,33 @@ class Pet:
         window,
         label,
         message_label,
+        bed_label,
         frequency: int,
         x: int,
         y: int,
     ):
         self.window = window
-        self.label = label
-        self.message_label = message_label
+        self.label = label  # Main canvas for drawing pet and bed
+        self.message_label = message_label  # Speech bubble label
+        self.bed_label = bed_label  # Not used in canvas approach
+        self.pet_item = None  # Will store canvas item ID for pet image
         self.animation_order = {
             TalkAnimation: {
                 "nexts": {
-                    IdleAnimation: 0.5,
-                    TalkAnimation: 0.5,
+                    IdleAnimation: 0.7,
+                    TalkAnimation: 0.3,
                 }
             },
             IdleAnimation: {
                 "nexts": {
-                    WalkLeftAnimation: 0.2,
-                    WalkRightAnimation: 0.2,
+                    WalkLeftAnimation: 0.3,
+                    WalkRightAnimation: 0.3,
                     IdleToSleepAnimation: 0.2,
-                    TalkAnimation: 100,
+                    TalkAnimation: 10.2,
                 }
             },
             IdleToSleepAnimation: {"nexts": {SleepAnimation: 1}},
-            SleepAnimation: {"nexts": {SleepToIdleAnimation: 1}},
+            SleepAnimation: {"nexts": {SleepToIdleAnimation: 0.3, SleepAnimation: 0.7}},
             SleepToIdleAnimation: {"nexts": {IdleAnimation: 1}},
             WalkLeftAnimation: {
                 "nexts": {
@@ -59,10 +62,9 @@ class Pet:
         }
 
         self._current_state = None
-        self.set_state(starting_state(), called_from="__init__")  # Set initial state
-
         self.x = x
         self.y = y
+        self.set_state(starting_state(), called_from="__init__")  # Set initial state
 
         # Store mouse click position for dragging
         self.start_drag_x = 0
@@ -84,7 +86,13 @@ class Pet:
 
         if self._current_state:
             first_frame = self._current_state.update_animation()[0]
-            self.label.configure(image=first_frame)
+            # Create or update pet image on canvas (will be drawn over bed)
+            if self.pet_item:
+                self.label.itemconfig(self.pet_item, image=first_frame)
+            else:
+                self.pet_item = self.label.create_image(
+                    0, 0, image=first_frame, anchor="nw"
+                )
             # Force an immediate update to prevent flickering
             self.label.update_idletasks()
 
@@ -100,39 +108,25 @@ class Pet:
         self.x += delta_x
         self.y += delta_y
 
-        # Update window geometry and label image
-        self.window.config(bg="#7F007F")
-        self.window.geometry(f"400x400+{int(self.x)}+{int(self.y)}")
-        self.label.configure(image=frame)
+        # Update window position
+        self.window.geometry(f"300x250+{int(self.x)}+{int(self.y)}")
 
-        # Clear previous drawings and update the speech bubble
-        self.message_label.delete("all")
+        # Update pet image on canvas (transparent cat over bed)
+        if self.pet_item:
+            self.label.itemconfig(self.pet_item, image=frame)
+
+        # Update speech bubble
         if message:
-            # Create the speech bubble rectangle
-            self.message_label.create_rectangle(
-                10, 10, 290, 80, fill="white", outline="black", width=2
-            )
-            # Create the triangle pointing down
-            self.message_label.create_polygon(
-                140, 80, 160, 80, 150, 95, fill="white", outline="black", width=2
-            )
-            # Add the text to the canvas
-            self.message_label.create_text(
-                150, 45, text=message, font=("Arial", 12), fill="black", width=270
-            )
-        # if message == "":
-        #     print("No message to display")
+            self.message_label.configure(text=message)
+            self.message_label.place(x=50, y=10)  # Above the pet, within window bounds
+        else:
+            self.message_label.place_forget()  # Hide when no message
 
-        #     # self.message_label.pack_forget()
-        # else:
-
-        #     #self.message_label.pack()
         print(
             f"Update: X: {int(self.x)}, Y: {int(self.y)} (State: {type(self._current_state).__name__}))"
         )
 
-        # Now, handle the next event based on the new event_number
-
+        # Handle state transitions
         if finished_animation:
             new_animation_pool = self.animation_order[type(self._current_state)][
                 "nexts"
@@ -143,26 +137,23 @@ class Pet:
             print(f"new state: {type(new_state)} and {new_state}")
             self.set_state(new_state(), called_from="update_pet")
 
-            # def transition_to_next():
-            #     self.set_state(new_state(), called_from="delayed_transition")
-            #     # TODO: THIS NEEDS TO BE HERE OR IT WILL FLICKER BUT WHYYYY??? ITS ALSO OK IF I DO THE SET_STATE CODE
-            #     self.update_pet()
-            # self.window.after(100, transition_to_next)
-            # return  # Don't schedule regular update, transition will handle it
+        self.window.after(
+            100, self.update_pet
+        )  # Schedule next update    # Dragging functions (can remain mostly the same, just update self.x/self.y)
 
-        self.window.after(100, self.update_pet)  # Schedule next update directly
-
-    # Dragging functions (can remain mostly the same, just update self.x/self.y)
     def start_drag(self, event):
         self.start_drag_x = event.x
         self.start_drag_y = event.y
 
     def do_drag(self, event):
+        # Calculate new position based on drag
         new_x = self.window.winfo_x() + (event.x - self.start_drag_x)
         new_y = self.window.winfo_y() + (event.y - self.start_drag_y)
         self.x = int(new_x)
         self.y = int(new_y)
-        self.window.geometry(f"+{self.x}+{self.y}")
+
+        # Update window position (this moves both cat and bed together)
+        self.window.geometry(f"200x200+{self.x}+{self.y}")
         print(f"Drag: Setting X: {self.x}, Y: {self.y}")
 
     # def _create_rounded_rectangle(self, canvas, x1, y1, x2, y2, radius, **kwargs):

@@ -7,7 +7,7 @@ import os
 import uuid
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from MyTextToSpeech import MyTextToSpeech
+from pep_talk import PepTalk
 
 
 # TODO: so many flags
@@ -53,7 +53,7 @@ class TalkAnimation(PetAnimation):
         self.full_message_display_time = 2
 
         # Initialize TTS (singleton)
-        self.tts = MyTextToSpeech()
+        self.tts = PepTalk()
         self.tts_started = False
         self.message_chosen = False
 

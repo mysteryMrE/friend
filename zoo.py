@@ -1,39 +1,58 @@
-# window setup (mostly the same)
+# Simple window setup with transparent pet on bed
 from pet import Pet
 import tkinter as tk
 from pet_animations.idle import IdleAnimation
-from pet_animations.talk import TalkAnimation
-
 
 window = tk.Tk()
 
-# Use a Canvas for the speech bubble to allow drawing custom shapes
-speech_bubble_canvas = tk.Canvas(
-    window, width=300, height=100, bg="#7F007F", highlightthickness=0
+# Create transparent background window
+window.config(bg="#7F007F")
+window.attributes("-topmost", True)
+window.overrideredirect(True)
+window.wm_attributes("-transparentcolor", "#7F007F")  # Make purple transparent
+
+# Create main canvas that will hold both bed and cat
+main_canvas = tk.Canvas(
+    window, width=300, height=250, bg="#7F007F", highlightthickness=0
 )
 
-# Create the pet object, passing necessary Tkinter elements
-label = tk.Label(window, bd=0, bg="#7F007F")
+# Create speech bubble label (separate from canvas for easier text handling)
+speech_label = tk.Label(
+    window, bg="white", fg="black", font=("Arial", 12), relief="solid", borderwidth=1
+)
+
+# Load bed image
+bed_image = tk.PhotoImage(
+    file="D:\\Dokumentumok\\SCHOOL\\pets\\assets\\images\\bed.gif"
+)
+
+# Draw bed on canvas (this will be the background layer)
+bed_item = main_canvas.create_image(0, 20, image=bed_image, anchor="nw")
+
+# Create the pet object
 pet = Pet(
     starting_state=IdleAnimation,
     window=window,
-    label=label,
-    message_label=speech_bubble_canvas,
+    label=main_canvas,  # Pass canvas for drawing pet
+    message_label=speech_label,
+    bed_label=None,  # No longer needed, bed is on canvas
     frequency=0.1,
     x=1400,
     y=150,
 )
 
-window.config(highlightbackground="#7F007F")
-label.bind("<Control-Button-1>", pet.start_drag)
-label.bind("<Control-B1-Motion>", pet.do_drag)
-window.bind("<Control-p>", pet.close_program)
-window.attributes("-topmost", True)
-window.overrideredirect(True)
-window.wm_attributes("-transparentcolor", "#7F007F")
-label.place(x=150, y=150)  # Center the 100x100 cat image in the 400x400 window
-speech_bubble_canvas.place(x=200, y=40, anchor="n")  # Position canvas above the cat
+# Position the canvas and speech label
+main_canvas.place(x=0, y=0)
+# speech_label will be positioned dynamically when there's a message
 
+# Bind drag events to canvas
+main_canvas.bind("<Control-Button-1>", pet.start_drag)
+main_canvas.bind("<Control-B1-Motion>", pet.do_drag)
+window.bind("<Control-p>", pet.close_program)
+
+# Keep reference to prevent garbage collection
+window.bed_image = bed_image
+main_canvas.bed_image = bed_image  # Also keep reference on canvas
 
 # Initial call to start the pet's behavior
 pet.update_pet()  # Start the main loop via the pet object
