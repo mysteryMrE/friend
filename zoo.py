@@ -23,7 +23,7 @@ speech_label = tk.Label(
 
 # Load bed image
 bed_image = tk.PhotoImage(
-    file="D:\\Dokumentumok\\SCHOOL\\pets\\assets\\images\\bed.gif"
+    file="D:\\Dokumentumok\\SCHOOL\\IT_PROJECTS\\pets\\assets\\images\\bed.gif"
 )
 
 # Draw bed on canvas (this will be the background layer)

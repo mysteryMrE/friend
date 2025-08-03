@@ -14,7 +14,7 @@ class PetAnimation(ABC):
         animation_repeat: int,
     ):
         self.cycle = 0
-        self.imgpath = "D:\\Dokumentumok\\SCHOOL\\pets\\assets\\images\\"
+        self.imgpath = "D:\\Dokumentumok\\SCHOOL\\IT_PROJECTS\\pets\\assets\\images\\"
         self.resource_name = resource_name
         self.resource_length = resource_length
         self.animation_speed = animation_speed

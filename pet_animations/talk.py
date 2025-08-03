@@ -39,7 +39,7 @@ class TalkAnimation(PetAnimation):
             "Let's go for a walk!",
         ]
         self.ending_image = tk.PhotoImage(
-            file="D:\\Dokumentumok\\SCHOOL\\pets\\assets\\images\\"
+            file="D:\\Dokumentumok\\SCHOOL\\IT_PROJECTS\\pets\\assets\\images\\"
             + "talk_stopped_transparent.gif",
             format="gif -index 0",
         )
