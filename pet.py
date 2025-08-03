@@ -1,3 +1,4 @@
+# pet.py
 import tkinter as tk
 import random
 from pet_animations.idle import IdleAnimation
@@ -8,40 +9,45 @@ from pet_animations.talk import TalkAnimation
 from pet_animations.walk_left import WalkLeftAnimation
 from pet_animations.walk_right import WalkRightAnimation
 from pet_animation import PetAnimation
+from animation_factory import AnimationFactory
 
 
 class Pet:
     def __init__(
         self,
         starting_state: PetAnimation,
-        window,
-        label,
-        message_label,
-        bed_label,
+        pet_window,
+        pet_canvas,
+        bed_window,
+        bed_canvas,
+        message_window,
+        speech_label,  # ADDED: Speech label is now a parameter
         frequency: int,
         x: int,
         y: int,
     ):
-        self.window = window
-        self.label = label  # Main canvas for drawing pet and bed
-        self.message_label = message_label  # Speech bubble label
-        self.bed_label = bed_label  # Not used in canvas approach
-        self.pet_item = None  # Will store canvas item ID for pet image
+        self.pet_window = pet_window
+        self.pet_canvas = pet_canvas
+        self.bed_window = bed_window
+        self.bed_canvas = bed_canvas
+        self.message_window = message_window
+        self.speech_label = speech_label  # ADDED: Store the speech label
+        self.pet_item = None
+        self.current_pet_image = None
+        self.bed_item = None
+        self.first_run = True  # Flag to manage initial setup
+        self._image_references = []  # Keep references to prevent garbage collection
+
         self.animation_order = {
-            TalkAnimation: {
-                "nexts": {
-                    IdleAnimation: 0.7,
-                    TalkAnimation: 0.3,
-                }
-            },
+            TalkAnimation: {"nexts": {IdleAnimation: 0.7, TalkAnimation: 0.3}},
             IdleAnimation: {
                 "nexts": {
                     WalkLeftAnimation: 0.3,
                     WalkRightAnimation: 0.3,
                     IdleToSleepAnimation: 0.2,
-                    TalkAnimation: 10.2,
+                    TalkAnimation: 0.2,
                 }
-            },
+            },  # Corrected weights
             IdleToSleepAnimation: {"nexts": {SleepAnimation: 1}},
             SleepAnimation: {"nexts": {SleepToIdleAnimation: 0.3, SleepAnimation: 0.7}},
             SleepToIdleAnimation: {"nexts": {IdleAnimation: 1}},
@@ -60,24 +66,22 @@ class Pet:
                 }
             },
         }
-
         self._current_state = None
         self.x = x
         self.y = y
-        self.set_state(starting_state(), called_from="__init__")  # Set initial state
 
-        # Store mouse click position for dragging
         self.start_drag_x = 0
         self.start_drag_y = 0
+        self.current_drag_window = None
 
         self.frequency = frequency
+        self._updating = False  # Flag to prevent recursive updates
 
     def set_state(self, new_state, called_from=None):
         print(
             f"Transitioning from {type(self._current_state).__name__} to {type(new_state).__name__} (state change called from {called_from})"
         )
 
-        # Clean up previous state if it has cleanup method
         if hasattr(self._current_state, "cleanup"):
             print(f"Calling cleanup on {type(self._current_state).__name__}")
             self._current_state.cleanup()
@@ -86,103 +90,134 @@ class Pet:
 
         if self._current_state:
             first_frame = self._current_state.update_animation()[0]
-            # Create or update pet image on canvas (will be drawn over bed)
+            self.current_pet_image = first_frame
+            # Keep a reference to prevent garbage collection
+            self._image_references.append(first_frame)
             if self.pet_item:
-                self.label.itemconfig(self.pet_item, image=first_frame)
+                self.pet_canvas.itemconfig(self.pet_item, image=self.current_pet_image)
             else:
-                self.pet_item = self.label.create_image(
-                    0, 0, image=first_frame, anchor="nw"
+                self.pet_item = self.pet_canvas.create_image(
+                    0, 0, image=self.current_pet_image, anchor="nw"
                 )
-            # Force immediate canvas update to prevent flickering
-            self.label.update_idletasks()
-            self.window.update_idletasks()
+            self.pet_canvas.update_idletasks()
+            self.pet_window.update_idletasks()
 
     def update_pet(self):
-        if not self._current_state:
-            self.window.after(100, self.update_pet)
+        if self._updating:
+            print("Warning: update_pet called while already updating, skipping...")
             return
 
-        frame, finished_animation, message = self._current_state.update_animation()
+        self._updating = True
 
-        # Get movement delta from the current state
-        delta_x, delta_y = self._current_state.get_movement_delta()
-        self.x += delta_x
-        self.y += delta_y
+        try:
+            if self.first_run:
+                initial_state = AnimationFactory.get_animation(IdleAnimation)
+                self.set_state(initial_state, called_from="first_update")
+                self.first_run = False
 
-        # Update window position
-        self.window.geometry(f"300x250+{int(self.x)}+{int(self.y)}")
+            frame, finished_animation, message = self._current_state.update_animation()
+            self.current_pet_image = frame
+            # Keep a reference to prevent garbage collection
+            if frame not in self._image_references:
+                self._image_references.append(frame)
 
-        # Update pet image on canvas (transparent cat over bed)
-        if self.pet_item:
-            self.label.itemconfig(self.pet_item, image=frame)
-            # Force immediate canvas update to prevent flickering
-            self.label.update_idletasks()
+            delta_x, delta_y = self._current_state.get_movement_delta()
+            self.x += delta_x
+            self.y += delta_y
 
-        # Update speech bubble
-        if message:
-            self.message_label.configure(text=message)
-            self.message_label.place(x=50, y=10)  # Above the pet, within window bounds
-        else:
-            self.message_label.place_forget()  # Hide when no message
+            self.pet_window.geometry(f"300x250+{int(self.x)}+{int(self.y)}")
 
-        print(
-            f"Update: X: {int(self.x)}, Y: {int(self.y)} (State: {type(self._current_state).__name__}))"
-        )
+            if self.pet_item:
+                self.pet_canvas.itemconfig(self.pet_item, image=self.current_pet_image)
+                self.pet_canvas.update_idletasks()
 
-        # Handle state transitions
-        if finished_animation:
-            new_animation_pool = self.animation_order[type(self._current_state)][
-                "nexts"
-            ]
-            animations = list(new_animation_pool.keys())
-            weights = list(new_animation_pool.values())
-            new_state = random.choices(animations, weights=weights, k=1)[0]
-            print(f"new state: {type(new_state)} and {new_state}")
-            self.set_state(new_state(), called_from="update_pet")
+            if message:
+                self.message_window.deiconify()
+                self.speech_label.configure(
+                    text=message
+                )  # Corrected to use the stored label
+                message_x = self.pet_window.winfo_x() + 50
+                message_y = self.pet_window.winfo_y() - 50
+                self.message_window.geometry(f"+{message_x}+{message_y}")
+            else:
+                self.message_window.withdraw()
 
-        self.window.after(
-            100, self.update_pet
-        )  # Schedule next update    # Dragging functions (can remain mostly the same, just update self.x/self.y)
+            print(
+                f"Update: X: {int(self.x)}, Y: {int(self.y)} (State: {type(self._current_state).__name__}))"
+            )
 
-    def start_drag(self, event):
+            # Periodic cleanup of old image references
+            if len(self._image_references) > 50:
+                self.cleanup_old_images()
+
+            if finished_animation:
+                new_animation_pool = self.animation_order[type(self._current_state)][
+                    "nexts"
+                ]
+                animations = list(new_animation_pool.keys())
+                weights = list(new_animation_pool.values())
+                new_state_class = random.choices(animations, weights=weights, k=1)[0]
+                new_state = AnimationFactory.get_animation(new_state_class)
+                print(f"new state: {type(new_state)} and {new_state}")
+                self.set_state(new_state, called_from="update_pet")
+
+        except Exception as e:
+            print(f"Error in update_pet: {e}")
+        finally:
+            self._updating = False
+            # Schedule next update
+            self.pet_window.after(100, self.update_pet)
+
+    def bind_drag_events(self):
+        self.bed_canvas.bind("<Button-1>", self.start_drag_bed)
+        self.bed_canvas.bind("<B1-Motion>", self.do_drag_bed)
+        self.pet_canvas.bind("<Button-1>", self.start_drag_pet)
+        self.pet_canvas.bind("<B1-Motion>", self.do_drag_pet)
+
+    def start_drag_bed(self, event):
         self.start_drag_x = event.x
         self.start_drag_y = event.y
+        self.current_drag_window = self.bed_window
 
-    def do_drag(self, event):
-        # Calculate new position based on drag
-        new_x = self.window.winfo_x() + (event.x - self.start_drag_x)
-        new_y = self.window.winfo_y() + (event.y - self.start_drag_y)
-        self.x = int(new_x)
-        self.y = int(new_y)
+    def do_drag_bed(self, event):
+        if self.current_drag_window:
+            new_x = self.current_drag_window.winfo_x() + (event.x - self.start_drag_x)
+            new_y = self.current_drag_window.winfo_y() + (event.y - self.start_drag_y)
+            self.current_drag_window.geometry(f"+{new_x}+{new_y}")
 
-        # Update window position (this moves both cat and bed together)
-        self.window.geometry(f"300x250+{self.x}+{self.y}")
-        print(f"Drag: Setting X: {self.x}, Y: {self.y}")
+    def start_drag_pet(self, event):
+        self.start_drag_x = event.x
+        self.start_drag_y = event.y
+        self.current_drag_window = self.pet_window
 
-    # def _create_rounded_rectangle(self, canvas, x1, y1, x2, y2, radius, **kwargs):
-    #     """Draw a rounded rectangle on a canvas."""
-    #     # Draw the four corner arcs
-    #     canvas.create_arc(
-    #         x1, y1, x1 + 2 * radius, y1 + 2 * radius, start=90, extent=90, **kwargs
-    #     )
-    #     canvas.create_arc(
-    #         x2 - 2 * radius, y1, x2, y1 + 2 * radius, start=0, extent=90, **kwargs
-    #     )
-    #     canvas.create_arc(
-    #         x1, y2 - 2 * radius, x1 + 2 * radius, y2, start=180, extent=90, **kwargs
-    #     )
-    #     canvas.create_arc(
-    #         x2 - 2 * radius, y2 - 2 * radius, x2, y2, start=270, extent=90, **kwargs
-    #     )
-    #     # Draw the four connecting lines
-    #     canvas.create_line(x1 + radius, y1, x2 - radius, y1, **kwargs)
-    #     canvas.create_line(x1 + radius, y2, x2 - radius, y2, **kwargs)
-    #     canvas.create_line(x1, y1 + radius, x1, y2 - radius, **kwargs)
-    #     canvas.create_line(x2, y1 + radius, x2, y2 - radius, **kwargs)
-    #     # Draw the center rectangle to fill the color
-    #     canvas.create_rectangle(
-    #         x1 + radius, y1 + radius, x2 - radius, y2 - radius, **kwargs
-    #     )
+    def do_drag_pet(self, event):
+        if self.current_drag_window:
+            new_x = self.current_drag_window.winfo_x() + (event.x - self.start_drag_x)
+            new_y = self.current_drag_window.winfo_y() + (event.y - self.start_drag_y)
+            self.current_drag_window.geometry(f"+{new_x}+{new_y}")
+            self.x = new_x
+            self.y = new_y
 
     def close_program(self, event=None):
-        self.window.destroy()
+        # Clean up image references
+        self._image_references.clear()
+        # Clear animation factory instances
+        AnimationFactory.clear_instances()
+        # Just destroy the windows, let the main window handle the rest
+        try:
+            self.pet_window.destroy()
+        except:
+            pass
+        try:
+            self.bed_window.destroy()
+        except:
+            pass
+        try:
+            self.message_window.destroy()
+        except:
+            pass
+
+    def cleanup_old_images(self):
+        """Keep only the last 50 image references to prevent memory buildup"""
+        if len(self._image_references) > 50:
+            self._image_references = self._image_references[-50:]

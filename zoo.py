@@ -1,59 +1,96 @@
+# zoo.py
 # Simple window setup with transparent pet on bed
-from pet import Pet
 import tkinter as tk
+from pet import Pet
 from pet_animations.idle import IdleAnimation
 
-window = tk.Tk()
+# Create main root window (hidden)
+root = tk.Tk()
+root.withdraw()  # Hide the main window
 
-# Create transparent background window
-window.config(bg="#7F007F")
-window.attributes("-topmost", True)
-window.overrideredirect(True)
-window.wm_attributes("-transparentcolor", "#7F007F")  # Make purple transparent
-
-# Create main canvas that will hold both bed and cat
-main_canvas = tk.Canvas(
-    window, width=300, height=250, bg="#7F007F", highlightthickness=0
+# Bed window (use Toplevel)
+bed_window = tk.Toplevel(root)
+bed_window.config(bg="#7F007F")
+bed_window.attributes("-topmost", True)
+bed_window.overrideredirect(True)
+bed_window.wm_attributes("-transparentcolor", "#7F007F")
+bed_canvas = tk.Canvas(
+    bed_window, width=300, height=250, bg="#7F007F", highlightthickness=0
 )
+bed_canvas.pack(fill="both", expand=True)
 
-# Create speech bubble label (separate from canvas for easier text handling)
-speech_label = tk.Label(
-    window, bg="white", fg="black", font=("Arial", 12), relief="solid", borderwidth=1
-)
-
-# Load bed image
 bed_image = tk.PhotoImage(
     file="D:\\Dokumentumok\\SCHOOL\\IT_PROJECTS\\pets\\assets\\images\\bed.gif"
 )
+bed_item = bed_canvas.create_image(0, 0, image=bed_image, anchor="nw")
 
-# Draw bed on canvas (this will be the background layer)
-bed_item = main_canvas.create_image(0, 20, image=bed_image, anchor="nw")
+# Pet window (use Toplevel)
+pet_window = tk.Toplevel(root)
+pet_window.config(bg="#7F007F")
+pet_window.attributes("-topmost", True)
+pet_window.overrideredirect(True)
+pet_window.wm_attributes("-transparentcolor", "#7F007F")
+pet_canvas = tk.Canvas(
+    pet_window, width=300, height=250, bg="#7F007F", highlightthickness=0
+)
+pet_canvas.pack(fill="both", expand=True)
+
+# Message window (use Toplevel)
+message_window = tk.Toplevel(root)
+message_window.overrideredirect(True)
+message_window.config(bg="#7F007F")
+message_window.attributes("-topmost", True)
+message_window.wm_attributes(
+    "-transparentcolor", "#7F007F"
+)  # A better transparent color for the message
+speech_label = tk.Label(
+    message_window,
+    bg="white",
+    fg="black",
+    font=("Arial", 12),
+    relief="solid",
+    borderwidth=1,
+)
+speech_label.pack(fill="both", expand=True)
+message_window.withdraw()  # Initially hide the message window
 
 # Create the pet object
 pet = Pet(
-    starting_state=IdleAnimation,
-    window=window,
-    label=main_canvas,  # Pass canvas for drawing pet
-    message_label=speech_label,
-    bed_label=None,  # No longer needed, bed is on canvas
+    starting_state=IdleAnimation,  # Pass the class, not instance
+    pet_window=pet_window,
+    pet_canvas=pet_canvas,
+    bed_window=bed_window,
+    bed_canvas=bed_canvas,
+    message_window=message_window,
+    speech_label=speech_label,  # ADDED: Pass the speech label to the Pet object
     frequency=0.1,
     x=1400,
     y=150,
 )
 
-# Position the canvas and speech label
-main_canvas.place(x=0, y=0)
-# speech_label will be positioned dynamically when there's a message
+pet.bind_drag_events()
 
-# Bind drag events to canvas
-main_canvas.bind("<Control-Button-1>", pet.start_drag)
-main_canvas.bind("<Control-B1-Motion>", pet.do_drag)
-window.bind("<Control-p>", pet.close_program)
+# Ensure the pet window has the close binding as well, for consistency
+pet_window.bind("<Control-p>", pet.close_program)
+bed_window.bind("<Control-p>", pet.close_program)
 
-# Keep reference to prevent garbage collection
-window.bed_image = bed_image
-main_canvas.bed_image = bed_image  # Also keep reference on canvas
 
-# Initial call to start the pet's behavior
-pet.update_pet()  # Start the main loop via the pet object
-window.mainloop()
+# Close the application properly when windows are closed
+def on_closing():
+    pet.close_program()
+    root.destroy()
+
+
+bed_window.protocol("WM_DELETE_WINDOW", on_closing)
+pet_window.protocol("WM_DELETE_WINDOW", on_closing)
+message_window.protocol("WM_DELETE_WINDOW", on_closing)
+
+# THE CRITICAL LINE: Schedule the first call to update_pet()
+# This ensures it runs *after* mainloop() has started.
+pet_window.after(1, pet.update_pet)
+
+# Keep reference to prevent garbage collection for the bed image
+root.bed_image = bed_image
+
+# Start the main Tkinter event loop on the root window
+root.mainloop()
