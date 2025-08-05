@@ -47,7 +47,7 @@ class Pet:
                     WalkLeftAnimation: 0.3,
                     WalkRightAnimation: 0.3,
                     IdleToSleepAnimation: 0.2,
-                    TalkAnimation: 0.2,
+                    TalkAnimation: 100.2,
                     ListenAnimation: 100.2,
                 }
             },  # Corrected weights

@@ -34,7 +34,7 @@ class TalkAnimation(PetAnimation):
             # "I love you!",
             # "Feed me!",
             # "I'm happy!",
-            "To be, or not to be: that is the question: Whether 'tis nobler in the mind to suffer The slings and arrows of outrageous fortune, Or to take arms against a sea of troubles, And by opposing end them?",
+            # "To be, or not to be: that is the question: Whether 'tis nobler in the mind to suffer The slings and arrows of outrageous fortune, Or to take arms against a sea of troubles, And by opposing end them?",
             "Where's my toy?",
             "Let's go for a walk!",
         ]
