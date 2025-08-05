@@ -1,13 +1,3 @@
-# animation_factory.py
-from pet_animations.idle import IdleAnimation
-from pet_animations.idle_to_sleep import IdleToSleepAnimation
-from pet_animations.sleep import SleepAnimation
-from pet_animations.sleep_to_idle import SleepToIdleAnimation
-from pet_animations.talk import TalkAnimation
-from pet_animations.walk_left import WalkLeftAnimation
-from pet_animations.walk_right import WalkRightAnimation
-
-
 class AnimationFactory:
     """Factory to create and reuse animation instances"""
 

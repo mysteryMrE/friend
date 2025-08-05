@@ -85,12 +85,12 @@ bed_window.protocol("WM_DELETE_WINDOW", on_closing)
 pet_window.protocol("WM_DELETE_WINDOW", on_closing)
 message_window.protocol("WM_DELETE_WINDOW", on_closing)
 
-# THE CRITICAL LINE: Schedule the first call to update_pet()
-# This ensures it runs *after* mainloop() has started.
-pet_window.after(1, pet.update_pet)
 
-# Keep reference to prevent garbage collection for the bed image
 root.bed_image = bed_image
+
+pet.update_pet()
+# pet_window.after(1, pet.update_pet)
+
 
 # Start the main Tkinter event loop on the root window
 root.mainloop()
