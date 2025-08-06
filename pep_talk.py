@@ -1,8 +1,6 @@
 import threading
 import time
 import subprocess
-import tempfile
-import os
 
 
 class PepTalk:

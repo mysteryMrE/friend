@@ -40,15 +40,14 @@ class Pet:
         self.first_run = True  # Flag to manage initial setup
         # TODO: screenshot, something wrong with the factory, talking sometimes is bad, usually if i move the pet??,
         self.animation_order = {
-            ListenAnimation: {"nexts": {TalkAnimation: 0.5}},
+            ListenAnimation: {"nexts": {IdleAnimation: 100.0}},
             TalkAnimation: {"nexts": {IdleAnimation: 0.7, TalkAnimation: 0.3}},
             IdleAnimation: {
                 "nexts": {
                     WalkLeftAnimation: 0.3,
                     WalkRightAnimation: 0.3,
                     IdleToSleepAnimation: 0.2,
-                    TalkAnimation: 100.2,
-                    ListenAnimation: 0.2,
+                    TalkAnimation: 0.2,
                 }
             },  # Corrected weights
             IdleToSleepAnimation: {"nexts": {SleepAnimation: 1}},
@@ -79,6 +78,7 @@ class Pet:
 
         self.frequency = frequency
         self._updating = False  # Flag to prevent recursive updates
+        AnimationFactory.setup_listen()
 
     def set_state(self, new_state, called_from=None):
         print(
@@ -169,6 +169,19 @@ class Pet:
         self.bed_canvas.bind("<B1-Motion>", self.do_drag_bed)
         self.pet_canvas.bind("<Button-1>", self.start_drag_pet)
         self.pet_canvas.bind("<B1-Motion>", self.do_drag_pet)
+        self.pet_canvas.bind("<Button-3>", self.listen_up)
+
+    def listen_up(self, event):
+        if self._current_state and (
+            isinstance(self._current_state, ListenAnimation)
+            or isinstance(self._current_state, TalkAnimation)
+        ):
+            print("Already listening, ignoring listen_up event")
+            return
+        self.set_state(
+            AnimationFactory.get_animation(ListenAnimation), called_from="listen_up"
+        )
+        print("Pet is now listening...")
 
     def start_drag_bed(self, event):
         self.start_drag_x = event.x

@@ -40,7 +40,7 @@ class SpeechToText:
             print(f"Listening for speech in {language.value}...")
             audio = self.recognizer.listen(source)
 
-            text = "Sorry, I didn't catch that."
+            text = None
             try:
                 text = self.recognizer.recognize_google(audio, language=language.value)
                 print(f"Recognized text in {language.value}: {text}")

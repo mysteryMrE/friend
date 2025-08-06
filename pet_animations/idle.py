@@ -9,5 +9,5 @@ class IdleAnimation(PetAnimation):
             resource_name="idle_transparent.gif",
             resource_length=5,
             animation_speed=0.5,
-            animation_repeat=2,
+            animation_repeat=4,
         )

@@ -1,4 +1,6 @@
+from mirror_mirror import MirrorMirror
 from pet_animations.listen import ListenAnimation
+from pet_animations.talk import TalkAnimation
 
 
 class AnimationFactory:
@@ -6,23 +8,28 @@ class AnimationFactory:
 
     _instances = {}
 
+    _mirror_mirror = MirrorMirror()
+
+    @classmethod
+    def setup_listen(cls):
+        """Setup the listen animation"""
+        if "ListenAnimation" in cls._instances:
+            print("ListenAnimation already set up, skipping setup")
+            return
+        cls._instances["ListenAnimation"] = ListenAnimation()
+        cls._instances["ListenAnimation"].cycle = 0
+
     @classmethod
     def get_animation(cls, animation_class):
         """Get a reusable animation instance"""
+        animation_class = cls.handle_talk_listen_transition_hijack(animation_class)
         class_name = animation_class.__name__
         if class_name not in cls._instances:
             cls._instances[class_name] = animation_class()
             # Reset cycle to 0 for fresh start
             cls._instances[class_name].cycle = 0
-            if "ListenAnimation" in cls._instances and class_name == "TalkAnimation":
-                listen_message = cls._instances["ListenAnimation"].get_last_message()
-                if listen_message:
-                    print(
-                        f"INJECTED: Setting TalkAnimation message to: {listen_message}"
-                    )
-                    cls._instances[class_name].current_message = listen_message
-                else:
-                    print("INJECTED: No message from ListenAnimation, using default")
+            if class_name == "TalkAnimation":
+                cls.handle_listen_talk_transition()
         else:
             # Reset the cycle for reuse
             cls._instances[class_name].cycle = 0
@@ -37,19 +44,7 @@ class AnimationFactory:
             # Reset TalkAnimation state when reusing
             if hasattr(cls._instances[class_name], "message_sent"):
                 cls._instances[class_name].current_message = None
-                if "ListenAnimation" in cls._instances:
-                    listen_message = cls._instances[
-                        "ListenAnimation"
-                    ].get_last_message()
-                    if listen_message:
-                        cls._instances[class_name].current_message = listen_message
-                        print(
-                            f"Reusing TalkAnimation instance, giving listen message: {listen_message}"
-                        )
-                    else:
-                        print(
-                            "Reusing TalkAnimation instance, no message from ListenAnimation"
-                        )
+                cls.handle_listen_talk_transition()
                 cls._instances[class_name].current_message_index = 0
                 cls._instances[class_name].last_message_time = __import__("time").time()
                 cls._instances[class_name].last_message = None
@@ -63,3 +58,34 @@ class AnimationFactory:
     def clear_instances(cls):
         """Clear all cached instances"""
         cls._instances.clear()
+
+    @classmethod
+    def handle_talk_listen_transition_hijack(cls, animation_class):
+        print(f"Handling transition for class: {animation_class.__name__}")
+        if (
+            "ListenAnimation" in cls._instances
+            and cls._instances["ListenAnimation"].has_last_message()
+        ):
+            print("Hijacking ListenAnimation to TalkAnimation   due to last message")
+            return TalkAnimation
+        elif "TalkAnimation" in cls._instances and cls._mirror_mirror.is_rebound():
+            print("Hijacking TalkAnimation to ListenAnimation due to rebound")
+            return ListenAnimation
+        else:
+            return animation_class
+
+    @classmethod
+    def handle_listen_talk_transition(cls):
+        if (
+            "ListenAnimation" in cls._instances
+            and cls._instances["ListenAnimation"].has_last_message()
+        ):
+            listen_message = cls._instances["ListenAnimation"].get_last_message()
+            answer = cls._mirror_mirror.get_answer(listen_message)
+            if answer:
+                cls._instances["TalkAnimation"].current_message = answer
+                print(
+                    f"Reusing TalkAnimation instance, giving listen message: {answer}"
+                )
+            else:
+                print("Reusing TalkAnimation instance, no message from ListenAnimation")
