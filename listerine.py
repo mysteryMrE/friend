@@ -1,6 +1,5 @@
 import speech_recognition as sr
 from enum import Enum
-import os
 
 
 class Language(Enum):
@@ -41,22 +40,7 @@ class SpeechToText:
             print(f"Listening for speech in {language.value}...")
             audio = self.recognizer.listen(source)
 
-            # if save_audio:
-            #     # Create a directory for saved audio if it doesn't exist
-            #     save_directory = "recorded_audio"
-            #     if not os.path.exists(save_directory):
-            #         os.makedirs(save_directory)
-
-            #     file_path = os.path.join(save_directory, audio_filename)
-
-            #     # Write the audio data to a WAV file
-            #     try:
-            #         with open(file_path, "wb") as f:
-            #             f.write(audio.get_wav_data())
-            #         print(f"Audio saved to {file_path}")
-            #     except Exception as e:
-            #         print(f"Failed to save audio file: {e}")
-            text = "test"
+            text = "Sorry, I didn't catch that."
             try:
                 text = self.recognizer.recognize_google(audio, language=language.value)
                 print(f"Recognized text in {language.value}: {text}")
@@ -81,23 +65,3 @@ def speech_to_text_english(stt_instance: SpeechToText, save_audio: bool = False)
         save_audio=save_audio,
         audio_filename="english_test.wav",
     )
-
-
-def speech_to_text_hungarian(stt_instance: SpeechToText, save_audio: bool = False):
-    stt_instance.speech_to_text(
-        Language.HUNGARIAN,
-        save_audio=save_audio,
-        audio_filename="hungarian_test.wav",
-    )
-
-
-if __name__ == "__main__":
-    check_mic_device_index()
-
-    # Create an instance of the class once. The ambient noise adjustment runs here.
-    speech_to_text_instance = SpeechToText(mic_index=2)
-
-    # Now, call the functions on this instance.
-    # The ambient noise adjustment will NOT run again.
-    speech_to_text_english(stt_instance=speech_to_text_instance, save_audio=True)
-    # speech_to_text_hungarian(stt_instance=speech_to_text_instance)
