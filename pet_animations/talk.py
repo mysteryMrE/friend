@@ -26,7 +26,7 @@ class TalkAnimation(PetAnimation):
         self.animation_id = str(uuid.uuid4())[:8]
         print(f"TalkAnimation {self.animation_id}: Creating new instance")
         self.messages = [
-            "Woof! Woof!",
+            "Woof! Woof! Woof!",
             # "Bark! Bark!",
             # "Hello there!",
             # "How are you?",
@@ -49,7 +49,7 @@ class TalkAnimation(PetAnimation):
         self.last_message_time = time.time()
         self.last_message = None
         self.message_interval = 0.1
-        self.separators = [" ", "!", "?", ".", ",", ";", ":", "'"]
+        self.non_ending_separators = [" ", ",", ";", ":", "'"]
         self.message_sent = False
         self.full_message_display_time = 2
 
@@ -127,9 +127,11 @@ class TalkAnimation(PetAnimation):
                     ]
                     if (
                         self.last_message is not None
-                        and self.last_message[-1] not in self.separators
+                        and self.last_message[-1] not in self.non_ending_separators
                     ):
                         self.last_message_time = time.time()
+                        if self.last_message[-1] in [".", "!", "?"]:
+                            self.last_message_time = time.time() + 1
                     self.current_message_index += 1
                     return self.last_message
                 else:
