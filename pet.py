@@ -40,7 +40,7 @@ class Pet:
         self.first_run = True  # Flag to manage initial setup
         # TODO: screenshot, something wrong with the factory, talking sometimes is bad, usually if i move the pet??,
         self.animation_order = {
-            ListenAnimation: {"nexts": {IdleAnimation: 0.5, TalkAnimation: 0.5}},
+            ListenAnimation: {"nexts": {TalkAnimation: 0.5}},
             TalkAnimation: {"nexts": {IdleAnimation: 0.7, TalkAnimation: 0.3}},
             IdleAnimation: {
                 "nexts": {

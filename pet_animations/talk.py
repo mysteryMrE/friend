@@ -87,11 +87,19 @@ class TalkAnimation(PetAnimation):
             time.time() - self.last_message_time > self.message_interval
             and not self.message_sent
         ):
-            if self.current_message is None:
+            if not self.tts_started:
                 print(f"TalkAnimation {self.animation_id}: Choosing a new message")
-                self.current_message = random.choice(
-                    self.messages
-                )  # if random.random() < 0.5 else None
+                if self.current_message is None or not self.message_chosen:
+                    # Only choose random message if no message was set from ListenAnimation
+                    if self.current_message is None:
+                        self.current_message = random.choice(self.messages)
+                        print(
+                            f"TalkAnimation {self.animation_id}: Using random message: {self.current_message}"
+                        )
+                    else:
+                        print(
+                            f"TalkAnimation {self.animation_id}: Using provided message: {self.current_message}"
+                        )
                 self.current_message_index = 0
                 self.last_message = None
                 self.message_chosen = True
@@ -111,7 +119,7 @@ class TalkAnimation(PetAnimation):
                 )
                 self.tts.speech(tts_message, speaker_id=self.animation_id)
                 self.tts_started = True
-            if self.current_message is not None:
+            if self.tts_started:
                 print(f"Current message: {self.current_message}")
                 if self.current_message_index < len(self.current_message) - 1:
                     self.last_message = self.current_message[
