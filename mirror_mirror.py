@@ -1,18 +1,41 @@
 from fuzzywuzzy import fuzz
 
+from pet_states.hide import HideAnimation
+
 
 class MirrorMirror:
     _q_and_a = {
-        "what is your name": "I am Mirror Mirror on the wall, your virtual assistant.",
-        "who are you": "I am Mirror Mirror on the wall, your virtual assistant.",
-        "how can you help me": "I can assist you with a variety of tasks, including answering questions and providing information.",
-        "tell me a joke": "Why did the scarecrow win an award? Because he was outstanding in his field!",
-        "what's the weather like": "Wouldn't you like to know, weatherboy?",
-        "stop": "Stopping now. If you need anything else, just ask!",
-        "goodbye": "Goodbye! Have a great day!",
-        "hi": "Hello! How can I assist you today?",
-        "hello": "Hi there stranger! What can I do for you?",
-        "help": "I'm here to help! What do you need assistance with?",
+        "what is your name": [
+            "I am Mirror Mirror on the wall, I can tell you if you are the fairest of them all.",
+            False,
+            False,
+        ],
+        "who are you": [
+            "I am Mirror Mirror on the wall, I can tell you if you are the fairest of them all.",
+            False,
+            False,
+        ],
+        "what's the weather like": [
+            "Wouldn't you like to know, weatherboy?",
+            False,
+            False,
+        ],
+        "tell me a joke": [
+            "Why did the mirror break? Because it couldn't handle the reflection of its own beauty!",
+            False,
+            False,
+        ],
+        "tell me a story": [
+            "Once upon a time, there was a mirror that could talk. It told stories to everyone who looked into it, but it never revealed its own secrets.",
+            False,
+            False,
+        ],
+        "stop": ["Stopping now. See you later!", False, True],
+        "goodbye": ["Goodbye! Have a great day!", False, False],
+        "hi": ["Hello! How can I assist you today?", True, False],
+        "hello": ["Hi there stranger! What can I do for you?", True, False],
+        "help": ["I'm here to help! What do you need assistance with?", True, False],
+        "hide": [HideAnimation, False, True],
     }
 
     def __init__(
@@ -23,19 +46,25 @@ class MirrorMirror:
         self.q_and_a = {q.lower(): a for q, a in self._q_and_a.items()}
         self.threshold = threshold
         self.default_answer = default_answer
-        self.repeat_question = False
+        self.listen_again = False
+        self.force_state = None
 
     def is_rebound(self):
         """Check if we should rebound to listening again (and reset the flag)"""
-        temp = self.repeat_question
-        self.repeat_question = False
+        temp = self.listen_again
+        self.listen_again = False
         print(f"DEBUG: is_rebound() returning {temp}")
         return temp
+
+    def is_directed_to_state(self):
+        temp = self.force_state
+        self.force_state = None
+        return temp is not None, temp
 
     def get_answer(self, query: str) -> str:
         best_match = None
         if query is None:
-            self.repeat_question = True
+            self.listen_again = True
             return self.default_answer
         highest_score = 0
         normalized_query = query.lower().strip()
@@ -51,10 +80,14 @@ class MirrorMirror:
             print(
                 f"DEBUG: Found best match with score {highest_score}% for question: '{best_match}'"
             )
-            return self.q_and_a[best_match]
+            self.listen_again = self.q_and_a[best_match][1]
+            self.force_state = (
+                self.q_and_a[best_match][0] if self.q_and_a[best_match][2] else None
+            )
+            return self.q_and_a[best_match][0]
         else:
             print(
                 f"DEBUG: No match found above threshold of {self.threshold}%. Highest score was {highest_score}%."
             )
-            self.repeat_question = True
+            self.listen_again = True
             return self.default_answer

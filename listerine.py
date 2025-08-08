@@ -17,11 +17,11 @@ class SpeechToText:
         self.recognizer.pause_threshold = 1.0
         self.mic_index = mic_index
 
-        if adjust_once:
-            with sr.Microphone(device_index=self.mic_index) as source:
-                print(f"Adjusting ambient sound using microphone {self.mic_index}...")
-                self.recognizer.adjust_for_ambient_noise(source, duration=1)
-            print("Ambient noise adjustment complete. Ready for speech.")
+        # if adjust_once:
+        #     with sr.Microphone(device_index=self.mic_index) as source:
+        #         print(f"Adjusting ambient sound using microphone {self.mic_index}...")
+        #         self.recognizer.adjust_for_ambient_noise(source, duration=1)
+        #     print("Ambient noise adjustment complete. Ready for speech.")
 
     @staticmethod
     def print_mic_device_index():
@@ -34,24 +34,30 @@ class SpeechToText:
         save_audio: bool = False,
         audio_filename: str = "microphone_input.wav",
     ):
-        with sr.Microphone(device_index=self.mic_index) as source:
-            # print(f"Adjusting ambient sound using microphone {self.mic_index}...")
-            # self.recognizer.adjust_for_ambient_noise(source, duration=1)
-            print(f"Listening for speech in {language.value}...")
-            audio = self.recognizer.listen(source)
+        try:
+            with sr.Microphone(device_index=self.mic_index) as source:
+                print(f"Adjusting ambient sound using microphone {self.mic_index}...")
+                self.recognizer.adjust_for_ambient_noise(source, duration=1)
+                print(f"Listening for speech in {language.value}...")
+                audio = self.recognizer.listen(source, timeout=3, phrase_time_limit=10)
 
-            text = None
-            try:
-                text = self.recognizer.recognize_google(audio, language=language.value)
-                print(f"Recognized text in {language.value}: {text}")
-            except sr.UnknownValueError:
-                print(f"Could not understand audio in {language.value}.")
-            except sr.RequestError as e:
-                print(
-                    f"Could not request results from Google Speech Recognition service; {e}"
-                )
-            finally:
-                return text
+                text = None
+                try:
+                    text = self.recognizer.recognize_google(
+                        audio, language=language.value
+                    )
+                    print(f"Recognized text in {language.value}: {text}")
+                except sr.UnknownValueError:
+                    print(f"Could not understand audio in {language.value}.")
+                except sr.RequestError as e:
+                    print(
+                        f"Could not request results from Google Speech Recognition service; {e}"
+                    )
+                finally:
+                    return text
+        except sr.WaitTimeoutError as e:
+            print(f"An error occurred: {e}")
+            return "better start talking!"
 
 
 def check_mic_device_index():

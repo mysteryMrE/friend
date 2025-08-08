@@ -26,7 +26,7 @@ class ListenAnimation(PetAnimation):
         self.listening = False
         self.speech_to_text_instance = SpeechToText(mic_index=2)
         self.start_time = None
-        self.delay = 0.5
+        self.delay = 0.7
         print("ListenAnimation initialized, ready to start listening")
         self.wait_frame = tk.PhotoImage(
             file="D:\\Dokumentumok\\SCHOOL\\IT_PROJECTS\\pets\\assets\\images\\"

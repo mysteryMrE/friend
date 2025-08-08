@@ -120,7 +120,6 @@ class TalkAnimation(PetAnimation):
                 self.tts.speech(tts_message, speaker_id=self.animation_id)
                 self.tts_started = True
             if self.tts_started:
-                print(f"Current message: {self.current_message}")
                 if self.current_message_index < len(self.current_message) - 1:
                     self.last_message = self.current_message[
                         : self.current_message_index + 1

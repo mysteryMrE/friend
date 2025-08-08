@@ -1,14 +1,16 @@
 # pet.py
+import threading
 import tkinter as tk
 import random
-from pet_animations.idle import IdleAnimation
-from pet_animations.idle_to_sleep import IdleToSleepAnimation
-from pet_animations.sleep import SleepAnimation
-from pet_animations.sleep_to_idle import SleepToIdleAnimation
-from pet_animations.talk import TalkAnimation
-from pet_animations.walk_left import WalkLeftAnimation
-from pet_animations.walk_right import WalkRightAnimation
-from pet_animations.listen import ListenAnimation
+from hot import Hot
+from pet_states.idle import IdleAnimation
+from pet_states.idle_to_sleep import IdleToSleepAnimation
+from pet_states.sleep import SleepAnimation
+from pet_states.sleep_to_idle import SleepToIdleAnimation
+from pet_states.talk import TalkAnimation
+from pet_states.walk_left import WalkLeftAnimation
+from pet_states.walk_right import WalkRightAnimation
+from pet_states.listen import ListenAnimation
 from pet_animation import PetAnimation
 from animation_factory import AnimationFactory
 
@@ -26,6 +28,8 @@ class Pet:
         frequency: int,
         x: int,
         y: int,
+        access_key: str = None,
+        custom_keyword_paths: list = None,
     ):
         self.starting_state = starting_state
         self.pet_window = pet_window
@@ -41,7 +45,7 @@ class Pet:
         # TODO: screenshot, something wrong with the factory, talking sometimes is bad, usually if i move the pet??,
         self.animation_order = {
             ListenAnimation: {"nexts": {IdleAnimation: 100.0}},
-            TalkAnimation: {"nexts": {IdleAnimation: 0.7, TalkAnimation: 0.3}},
+            TalkAnimation: {"nexts": {IdleAnimation: 0.8, TalkAnimation: 0.2}},
             IdleAnimation: {
                 "nexts": {
                     WalkLeftAnimation: 0.3,
@@ -75,10 +79,18 @@ class Pet:
         self.start_drag_x = 0
         self.start_drag_y = 0
         self.current_drag_window = None
-
+        AnimationFactory.set_pet(self)
         self.frequency = frequency
         self._updating = False  # Flag to prevent recursive updates
         AnimationFactory.setup_listen()
+        self.wait_for_callback = threading.Event()
+        self.hot = Hot(
+            mic_index=1,
+            access_key=access_key,  # Access key can be set later if needed
+            flag=self.wait_for_callback,
+            custom_keyword_paths=custom_keyword_paths,
+        )
+        self.hot.start_listening()
 
     def set_state(self, new_state, called_from=None):
         print(
@@ -104,6 +116,10 @@ class Pet:
             self.pet_window.update_idletasks()
 
     def update_pet(self):
+
+        if self.wait_for_callback.is_set():
+            self.listen_up()
+
         if self._updating:
             print("Warning: update_pet called while already updating, skipping...")
             return
@@ -147,6 +163,7 @@ class Pet:
             # Periodic cleanup of old image reference
 
             if finished_animation:
+                prev_anim_name = type(self._current_state).__name__
                 new_animation_pool = self.animation_order[type(self._current_state)][
                     "nexts"
                 ]
@@ -156,6 +173,8 @@ class Pet:
                 new_state = AnimationFactory.get_animation(new_state_class)
                 print(f"new state: {type(new_state)} and {new_state}")
                 self.set_state(new_state, called_from="update_pet")
+                if prev_anim_name == "ListenAnimation":
+                    self.wait_for_callback.clear()
 
         except Exception as e:
             print(f"Error in update_pet: {e}")
@@ -171,17 +190,25 @@ class Pet:
         self.pet_canvas.bind("<B1-Motion>", self.do_drag_pet)
         self.pet_canvas.bind("<Button-3>", self.listen_up)
 
-    def listen_up(self, event):
+    def okay_to_listen(self):
         if self._current_state and (
             isinstance(self._current_state, ListenAnimation)
             or isinstance(self._current_state, TalkAnimation)
         ):
-            print("Already listening, ignoring listen_up event")
+            print("Already listening or talking, ignoring listen_up event")
+            if isinstance(self._current_state, TalkAnimation):
+                self.wait_for_callback.clear()
+            return False
+        return True
+
+    def listen_up(self):
+        if not self.okay_to_listen():
             return
+
         self.set_state(
             AnimationFactory.get_animation(ListenAnimation), called_from="listen_up"
         )
-        print("Pet is now listening...")
+        print("Pet is now in listening state...")
 
     def start_drag_bed(self, event):
         self.start_drag_x = event.x

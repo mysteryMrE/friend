@@ -1,10 +1,17 @@
 from mirror_mirror import MirrorMirror
-from pet_animations.listen import ListenAnimation
-from pet_animations.talk import TalkAnimation
+from pet_states.listen import ListenAnimation
+from pet_states.talk import TalkAnimation
 
 
 class AnimationFactory:
     """Factory to create and reuse animation instances"""
+
+    _pet = None
+
+    @classmethod
+    def set_pet(cls, pet):
+        """Set the pet instance for the factory"""
+        cls._pet = pet
 
     _instances = {}
 

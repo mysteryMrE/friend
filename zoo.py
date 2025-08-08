@@ -2,7 +2,15 @@
 # Simple window setup with transparent pet on bed
 import tkinter as tk
 from pet import Pet
-from pet_animations.idle import IdleAnimation
+from pet_states.idle import IdleAnimation
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
+PURCUPINE_ACCESS_KEY = os.getenv("PORCUPINE_ACCESS_KEY")
+CUSTOM_KEYWORD_PATH = [os.getenv("KEYWORD_PATH")]
 
 # Create main root window (hidden)
 root = tk.Tk()
@@ -66,6 +74,8 @@ pet = Pet(
     frequency=0.1,
     x=1400,
     y=150,
+    access_key=PURCUPINE_ACCESS_KEY,  # Pass the access key
+    custom_keyword_paths=CUSTOM_KEYWORD_PATH,  # Pass the custom keyword paths
 )
 
 pet.bind_drag_events()
