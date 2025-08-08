@@ -35,7 +35,7 @@ class MirrorMirror:
         "hi": ["Hello! How can I assist you today?", True, False],
         "hello": ["Hi there stranger! What can I do for you?", True, False],
         "help": ["I'm here to help! What do you need assistance with?", True, False],
-        "hide": [HideAnimation, False, True],
+        "go hide": [HideAnimation, False, True],
     }
 
     def __init__(
@@ -57,9 +57,12 @@ class MirrorMirror:
         return temp
 
     def is_directed_to_state(self):
+        return self.force_state is not None
+
+    def get_directed_state(self):
         temp = self.force_state
         self.force_state = None
-        return temp is not None, temp
+        return temp
 
     def get_answer(self, query: str) -> str:
         best_match = None

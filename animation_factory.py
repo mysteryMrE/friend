@@ -29,14 +29,35 @@ class AnimationFactory:
     @classmethod
     def get_animation(cls, animation_class):
         """Get a reusable animation instance"""
-        animation_class = cls.handle_talk_listen_transition_hijack(animation_class)
+        # Always check for answers
+        answer = None
+        if (
+            "ListenAnimation" in cls._instances
+            and cls._instances["ListenAnimation"].has_last_message()
+        ):
+            listen_message = cls._instances["ListenAnimation"].get_last_message()
+            answer = cls._mirror_mirror.get_answer(listen_message)
+        if answer:
+            if cls._mirror_mirror.is_directed_to_state():
+                animation_class = cls._mirror_mirror.get_directed_state()
+            else:
+                animation_class = TalkAnimation
+        elif "TalkAnimation" in cls._instances and cls._mirror_mirror.is_rebound():
+            print("Hijacking TalkAnimation to ListenAnimation due to rebound")
+            animation_class = ListenAnimation
+
+        # animation_class = cls.handle_directed_transition(animation_class)
+        # animation_class = cls.handle_talk_listen_transition_hijack(animation_class)
         class_name = animation_class.__name__
         if class_name not in cls._instances:
-            cls._instances[class_name] = animation_class()
+            if class_name == "HideAnimation":
+                cls._instances[class_name] = animation_class(cls._pet)
+            else:
+                cls._instances[class_name] = animation_class()
             # Reset cycle to 0 for fresh start
             cls._instances[class_name].cycle = 0
             if class_name == "TalkAnimation":
-                cls.handle_listen_talk_transition()
+                cls._instances["TalkAnimation"].current_message = answer
         else:
             # Reset the cycle for reuse
             cls._instances[class_name].cycle = 0
@@ -50,8 +71,7 @@ class AnimationFactory:
 
             # Reset TalkAnimation state when reusing
             if hasattr(cls._instances[class_name], "message_sent"):
-                cls._instances[class_name].current_message = None
-                cls.handle_listen_talk_transition()
+                cls._instances[class_name].current_message = answer
                 cls._instances[class_name].current_message_index = 0
                 cls._instances[class_name].last_message_time = __import__("time").time()
                 cls._instances[class_name].last_message = None
@@ -65,6 +85,17 @@ class AnimationFactory:
     def clear_instances(cls):
         """Clear all cached instances"""
         cls._instances.clear()
+
+    @classmethod
+    def handle_directed_transition(cls, animation_class):
+        bool_val, directed_state = cls._mirror_mirror.is_directed_to_state()
+        if bool_val:
+            print(f"Handling directed transition for class: {animation_class.__name__}")
+            cls._instances[
+                "ListenAnimation"
+            ].get_last_message()  # delete last message, the message was used to determine the directed state, no need to get back to talking state
+            return directed_state
+        return animation_class
 
     @classmethod
     def handle_talk_listen_transition_hijack(cls, animation_class):

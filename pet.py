@@ -3,6 +3,7 @@ import threading
 import tkinter as tk
 import random
 from hot import Hot
+from pet_states.hide import HideAnimation
 from pet_states.idle import IdleAnimation
 from pet_states.idle_to_sleep import IdleToSleepAnimation
 from pet_states.sleep import SleepAnimation
@@ -44,6 +45,7 @@ class Pet:
         self.first_run = True  # Flag to manage initial setup
         # TODO: screenshot, something wrong with the factory, talking sometimes is bad, usually if i move the pet??,
         self.animation_order = {
+            HideAnimation: {"nexts": {IdleAnimation: 1}},
             ListenAnimation: {"nexts": {IdleAnimation: 100.0}},
             TalkAnimation: {"nexts": {IdleAnimation: 0.8, TalkAnimation: 0.2}},
             IdleAnimation: {
@@ -52,6 +54,7 @@ class Pet:
                     WalkRightAnimation: 0.3,
                     IdleToSleepAnimation: 0.2,
                     TalkAnimation: 0.2,
+                    HideAnimation: 0.1,  # Added HideAnimation
                 }
             },  # Corrected weights
             IdleToSleepAnimation: {"nexts": {SleepAnimation: 1}},
@@ -189,6 +192,34 @@ class Pet:
         self.pet_canvas.bind("<Button-1>", self.start_drag_pet)
         self.pet_canvas.bind("<B1-Motion>", self.do_drag_pet)
         self.pet_canvas.bind("<Button-3>", self.listen_up)
+        self.bed_canvas.bind("<Double-Button-1>", self.tp)
+
+    def maintain_stacking_order(self):
+        """Keep pet above bed, both above other apps"""
+        try:
+            self.pet_window.lift(self.bed_window)
+        except:
+            pass
+
+    def tp(self, event):
+        """Teleport pet to bed location when double-clicking on bed"""
+        print("Teleporting pet to bed")
+
+        # Get bed window position (where the bed is)
+        bed_x = self.bed_window.winfo_x()
+        bed_y = self.bed_window.winfo_y()
+
+        # Update pet's internal coordinates to match bed position
+        self.x = bed_x
+        self.y = bed_y - 20
+
+        # Move pet window to bed location immediately
+        self.pet_window.geometry(f"300x250+{int(self.x)}+{int(self.y)}")
+        print(f"Pet teleported to bed at ({self.x}, {self.y})")
+
+        self.pet_window.after(1, self.maintain_stacking_order)
+        # Force update the display
+        self.pet_window.update_idletasks()
 
     def okay_to_listen(self):
         if self._current_state and (
