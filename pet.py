@@ -255,12 +255,16 @@ class Pet:
         self.start_drag_x = event.x
         self.start_drag_y = event.y
         self.current_drag_window = self.bed_window
+        self.pet_window.after(1, self.maintain_stacking_order)
+        self.pet_window.update_idletasks()
 
     def do_drag_bed(self, event):
         if self.current_drag_window:
             new_x = self.current_drag_window.winfo_x() + (event.x - self.start_drag_x)
             new_y = self.current_drag_window.winfo_y() + (event.y - self.start_drag_y)
             self.current_drag_window.geometry(f"+{new_x}+{new_y}")
+            self.pet_window.after(1, self.maintain_stacking_order)
+            self.pet_window.update_idletasks()
 
     def start_drag_pet(self, event):
         self.start_drag_x = event.x
