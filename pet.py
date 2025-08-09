@@ -14,6 +14,7 @@ from pet_states.walk_right import WalkRightAnimation
 from pet_states.listen import ListenAnimation
 from pet_animation import PetAnimation
 from animation_factory import AnimationFactory
+from pet_states.lie_down import LieDownAnimation
 
 
 class Pet:
@@ -45,6 +46,7 @@ class Pet:
         self.first_run = True  # Flag to manage initial setup
         # TODO: screenshot, something wrong with the factory, talking sometimes is bad, usually if i move the pet??,
         self.animation_order = {
+            LieDownAnimation: {"nexts": {IdleToSleepAnimation: 1}},
             HideAnimation: {"nexts": {IdleAnimation: 1}},
             ListenAnimation: {"nexts": {IdleAnimation: 100.0}},
             TalkAnimation: {"nexts": {IdleAnimation: 0.8, TalkAnimation: 0.2}},
@@ -55,6 +57,7 @@ class Pet:
                     IdleToSleepAnimation: 0.2,
                     TalkAnimation: 0.2,
                     HideAnimation: 0.1,  # Added HideAnimation
+                    LieDownAnimation: 0.1,  # Added LieDownAnimation
                 }
             },  # Corrected weights
             IdleToSleepAnimation: {"nexts": {SleepAnimation: 1}},
@@ -142,7 +145,7 @@ class Pet:
             self.x += delta_x
             self.y += delta_y
 
-            self.pet_window.geometry(f"300x250+{int(self.x)}+{int(self.y)}")
+            self.pet_window.geometry(f"100x100+{int(self.x)}+{int(self.y)}")
 
             if self.pet_item:
                 self.pet_canvas.itemconfig(self.pet_item, image=self.current_pet_image)
@@ -214,7 +217,7 @@ class Pet:
         self.y = bed_y - 20
 
         # Move pet window to bed location immediately
-        self.pet_window.geometry(f"300x250+{int(self.x)}+{int(self.y)}")
+        self.pet_window.geometry(f"100x100+{int(self.x)}+{int(self.y)}")
         print(f"Pet teleported to bed at ({self.x}, {self.y})")
 
         self.pet_window.after(1, self.maintain_stacking_order)

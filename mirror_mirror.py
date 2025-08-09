@@ -1,6 +1,7 @@
 from fuzzywuzzy import fuzz
 
 from pet_states.hide import HideAnimation
+from pet_states.lie_down import LieDownAnimation
 
 
 class MirrorMirror:
@@ -36,6 +37,7 @@ class MirrorMirror:
         "hello": ["Hi there stranger! What can I do for you?", True, False],
         "help": ["I'm here to help! What do you need assistance with?", True, False],
         "go hide": [HideAnimation, False, True],
+        "go sleep": [LieDownAnimation, False, True],
     }
 
     def __init__(
