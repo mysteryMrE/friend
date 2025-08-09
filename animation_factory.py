@@ -50,7 +50,11 @@ class AnimationFactory:
         # animation_class = cls.handle_talk_listen_transition_hijack(animation_class)
         class_name = animation_class.__name__
         if class_name not in cls._instances:
-            if class_name == "HideAnimation" or class_name == "LieDownAnimation":
+            if (
+                class_name == "HideAnimation"
+                or class_name == "LieDownAnimation"
+                or class_name == "DieAnimation"
+            ):
                 cls._instances[class_name] = animation_class(cls._pet)
             else:
                 cls._instances[class_name] = animation_class()

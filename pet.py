@@ -96,9 +96,13 @@ class Pet:
             flag=self.wait_for_callback,
             custom_keyword_paths=custom_keyword_paths,
         )
+        self.dead = False
         self.hot.start_listening()
 
     def set_state(self, new_state, called_from=None):
+        if self.dead:
+            print("Pet is dead, cannot change state.")
+            return
         print(
             f"Transitioning from {type(self._current_state).__name__} to {type(new_state).__name__} (state change called from {called_from})"
         )
@@ -122,6 +126,9 @@ class Pet:
             self.pet_window.update_idletasks()
 
     def update_pet(self):
+        if self.dead:
+            print("Pet is dead, cannot change state.")
+            return
 
         if self.wait_for_callback.is_set():
             self.listen_up()
@@ -271,6 +278,7 @@ class Pet:
     def close_program(self, event=None):
         # Clean up image references
         # Clear animation factory instances
+
         AnimationFactory.clear_instances()
         # Just destroy the windows, let the main window handle the rest
         try:
@@ -285,3 +293,7 @@ class Pet:
             self.message_window.destroy()
         except:
             pass
+        finally:
+            self.dead = True
+            self.hot.stop_listening()
+            self.pet_window.after(100, self.pet_window.master.quit)
