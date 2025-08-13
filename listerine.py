@@ -37,7 +37,7 @@ class SpeechToText:
         try:
             with sr.Microphone(device_index=self.mic_index) as source:
                 print(f"Adjusting ambient sound using microphone {self.mic_index}...")
-                self.recognizer.adjust_for_ambient_noise(source, duration=0.4)
+                self.recognizer.adjust_for_ambient_noise(source, duration=0.2)
                 print(f"Listening for speech in {language.value}...")
                 audio = self.recognizer.listen(source, timeout=3, phrase_time_limit=10)
 

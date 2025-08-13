@@ -26,6 +26,8 @@ class Pet:
         pet_canvas,
         bed_window,
         bed_canvas,
+        ball_window,
+        ball_canvas,
         message_window,
         speech_label,  # ADDED: Speech label is now a parameter
         frequency: int,
@@ -39,6 +41,8 @@ class Pet:
         self.pet_canvas = pet_canvas
         self.bed_window = bed_window
         self.bed_canvas = bed_canvas
+        self.ball_window = ball_window
+        self.ball_canvas = ball_canvas
         self.message_window = message_window
         self.speech_label = speech_label  # ADDED: Store the speech label
         self.pet_item = None
@@ -99,6 +103,17 @@ class Pet:
             custom_keyword_paths=custom_keyword_paths,
         )
         self.dead = False
+
+        self.ball_velocity_x = 0
+        self.ball_velocity_y = 0
+        self.ball_is_moving = False
+        self.ball_friction = (
+            0.95  # Deceleration factor (0.9 = 10% speed loss per frame)
+        )
+        self.ball_min_speed = 1.0  # Minimum speed before ball stops
+        self.drag_start_time = 0
+        self.drag_start_x = 0
+        self.drag_start_y = 0
         self.hot.start_listening()
 
     def set_state(self, new_state, called_from=None):
@@ -205,11 +220,15 @@ class Pet:
         self.pet_canvas.bind("<B1-Motion>", self.do_drag_pet)
         self.pet_canvas.bind("<Button-3>", self.listen_up)
         self.bed_canvas.bind("<Double-Button-1>", self.tp)
+        self.ball_canvas.bind("<Button-1>", self.start_drag_ball)
+        self.ball_canvas.bind("<B1-Motion>", self.do_drag_ball)
+        self.ball_canvas.bind("<ButtonRelease-1>", self.end_drag_ball)
 
     def maintain_stacking_order(self):
         """Keep pet above bed, both above other apps"""
         try:
             self.pet_window.lift(self.bed_window)
+            self.ball_window.lift(self.pet_window)
         except:
             pass
 
@@ -280,6 +299,167 @@ class Pet:
             self.current_drag_window.geometry(f"+{new_x}+{new_y}")
             self.x = new_x
             self.y = new_y
+
+    def start_drag_ball(self, event):
+        import time
+
+        self.start_drag_x = event.x
+        self.start_drag_y = event.y
+        self.current_drag_window = self.ball_window
+
+        # Record drag start for velocity calculation
+        self.drag_start_time = time.time()
+        self.drag_start_x = self.ball_window.winfo_x()
+        self.drag_start_y = self.ball_window.winfo_y()
+
+        # Stop any existing ball movement
+        self.ball_is_moving = False
+
+        self.pet_window.after(1, self.maintain_stacking_order)
+        self.pet_window.update_idletasks()
+
+    def do_drag_ball(self, event):
+        if self.current_drag_window:
+            new_x = self.current_drag_window.winfo_x() + (event.x - self.start_drag_x)
+            new_y = self.current_drag_window.winfo_y() + (event.y - self.start_drag_y)
+            self.current_drag_window.geometry(f"+{new_x}+{new_y}")
+
+    def end_drag_ball(self, event):
+        import time
+
+        if not self.current_drag_window:
+            return
+
+        # Calculate velocity based on drag distance and time
+        current_time = time.time()
+        drag_duration = current_time - self.drag_start_time
+
+        # Avoid division by zero
+        if drag_duration < 0.01:
+            drag_duration = 0.01
+
+        # Calculate distance moved during drag
+        end_x = self.ball_window.winfo_x()
+        end_y = self.ball_window.winfo_y()
+
+        distance_x = end_x - self.drag_start_x
+        distance_y = end_y - self.drag_start_y
+        total_distance = (distance_x**2 + distance_y**2) ** 0.5
+
+        # DETECTION: If drag was very slow or very short distance, treat as placement
+        placement_threshold_distance = (
+            5  # pixels - if moved less than this, it's placement
+        )
+        placement_threshold_time = (
+            0.5  # seconds - if held for longer than this, it's placement
+        )
+        placement_threshold_speed = (
+            50  # pixels/second - if average speed is less, it's placement
+        )
+
+        average_speed = total_distance / drag_duration
+
+        is_placement = (
+            total_distance < placement_threshold_distance  # Barely moved
+            or drag_duration > placement_threshold_time  # Held for a while
+            or average_speed < placement_threshold_speed  # Moved very slowly
+        )
+
+        if is_placement:
+            print(
+                f"Ball placed (distance: {total_distance:.1f}px, time: {drag_duration:.2f}s, speed: {average_speed:.1f}px/s)"
+            )
+            self.ball_velocity_x = 0
+            self.ball_velocity_y = 0
+            self.ball_is_moving = False
+            self.current_drag_window = None
+            return
+
+        # Calculate velocity (pixels per frame, assuming 60fps-ish)
+        # We multiply by a factor to make throwing feel more responsive
+        velocity_multiplier = 2.0
+        self.ball_velocity_x = (
+            (distance_x / drag_duration) * (1 / 60) * velocity_multiplier
+        )
+        self.ball_velocity_y = (
+            (distance_y / drag_duration) * (1 / 60) * velocity_multiplier
+        )
+
+        # Cap maximum velocity to prevent crazy fast throws
+        max_velocity = 15.0
+        if abs(self.ball_velocity_x) > max_velocity:
+            self.ball_velocity_x = (
+                max_velocity if self.ball_velocity_x > 0 else -max_velocity
+            )
+        if abs(self.ball_velocity_y) > max_velocity:
+            self.ball_velocity_y = (
+                max_velocity if self.ball_velocity_y > 0 else -max_velocity
+            )
+
+        print(
+            f"Ball thrown with velocity: ({self.ball_velocity_x:.2f}, {self.ball_velocity_y:.2f})"
+        )
+
+        # Start ball physics if there's significant velocity
+        total_speed = (self.ball_velocity_x**2 + self.ball_velocity_y**2) ** 0.5
+        if total_speed > self.ball_min_speed:
+            self.ball_is_moving = True
+            self.update_ball_physics()
+
+        self.current_drag_window = None
+
+    def update_ball_physics(self):
+        if not self.ball_is_moving or self.dead:
+            return
+
+        # Get current ball position
+        current_x = self.ball_window.winfo_x()
+        current_y = self.ball_window.winfo_y()
+
+        # Update position based on velocity
+        new_x = current_x + self.ball_velocity_x
+        new_y = current_y + self.ball_velocity_y
+
+        # Get screen dimensions for boundary checking
+        screen_width = self.ball_window.winfo_screenwidth()
+        screen_height = self.ball_window.winfo_screenheight()
+        ball_size = 50  # Assuming ball window is roughly 50x50
+
+        # Bounce off screen edges
+        if new_x < 0:
+            new_x = 0
+            self.ball_velocity_x = (
+                -self.ball_velocity_x * 0.8
+            )  # Lose some energy on bounce
+        elif new_x > screen_width - ball_size:
+            new_x = screen_width - ball_size
+            self.ball_velocity_x = -self.ball_velocity_x * 0.8
+
+        if new_y < 0:
+            new_y = 0
+            self.ball_velocity_y = -self.ball_velocity_y * 0.8
+        elif new_y > screen_height - ball_size:
+            new_y = screen_height - ball_size
+            self.ball_velocity_y = -self.ball_velocity_y * 0.8
+
+        # Move the ball window
+        self.ball_window.geometry(f"+{int(new_x)}+{int(new_y)}")
+
+        # Apply friction/air resistance
+        self.ball_velocity_x *= self.ball_friction
+        self.ball_velocity_y *= self.ball_friction
+
+        # Check if ball should stop moving
+        total_speed = (self.ball_velocity_x**2 + self.ball_velocity_y**2) ** 0.5
+        if total_speed < self.ball_min_speed:
+            self.ball_is_moving = False
+            self.ball_velocity_x = 0
+            self.ball_velocity_y = 0
+            print("Ball stopped moving")
+            return
+
+        # Schedule next physics update (roughly 60fps)
+        self.ball_window.after(16, self.update_ball_physics)
 
     def close_program(self, event=None):
         # Clean up image references
