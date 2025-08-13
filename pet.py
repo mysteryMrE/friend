@@ -3,6 +3,7 @@ import threading
 import tkinter as tk
 import random
 from hot import Hot
+from pet_states.comeback import ComeBackAnimation
 from pet_states.hide import HideAnimation
 from pet_states.idle import IdleAnimation
 from pet_states.idle_to_sleep import IdleToSleepAnimation
@@ -46,6 +47,7 @@ class Pet:
         self.first_run = True  # Flag to manage initial setup
         # TODO: screenshot, something wrong with the factory, talking sometimes is bad, usually if i move the pet??,
         self.animation_order = {
+            ComeBackAnimation: {"nexts": {IdleAnimation: 1}},
             LieDownAnimation: {"nexts": {IdleToSleepAnimation: 1}},
             HideAnimation: {"nexts": {IdleAnimation: 1}},
             ListenAnimation: {"nexts": {IdleAnimation: 100.0}},

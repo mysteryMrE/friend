@@ -1,5 +1,6 @@
 from fuzzywuzzy import fuzz
 
+from pet_states.comeback import ComeBackAnimation
 from pet_states.hide import HideAnimation
 from pet_states.lie_down import LieDownAnimation
 from pet_states.die import DieAnimation
@@ -42,6 +43,7 @@ class MirrorMirror:
         "go to sleep": [LieDownAnimation, False, True],
         "go to bed": [LieDownAnimation, False, True],
         "go die": [DieAnimation, False, True],
+        "come back": [ComeBackAnimation, False, True],
     }
 
     def __init__(
