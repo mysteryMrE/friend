@@ -33,7 +33,12 @@ class MirrorMirror:
             False,
             False,
         ],
-        "stop": ["Stopping now. See you later!", False, True],
+        "tell me something deep": [
+            "To be, or not to be? That is the question. Whether it is nobler in the mind to suffer the slings and arrows of outrageous fortune. Or to take arms against a sea of troubles and by opposing end them.",
+            False,
+            False,
+        ],
+        "stop": ["Stopping now. See you later!", False, False],
         "goodbye": ["Goodbye! Have a great day!", False, False],
         "hi": ["Hello! How can I assist you today?", True, False],
         "hello": ["Hi there stranger! What can I do for you?", True, False],

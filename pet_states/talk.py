@@ -8,6 +8,7 @@ import uuid
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pep_talk import PepTalk
+from voice import XTTSVoicePet
 
 
 # TODO: so many flags
@@ -26,7 +27,7 @@ class TalkAnimation(PetAnimation):
         self.animation_id = str(uuid.uuid4())[:8]
         print(f"TalkAnimation {self.animation_id}: Creating new instance")
         self.messages = [
-            "Woof! Woof! Woof!",
+            "Meow, meow, I'm a cat!",
             # "Bark! Bark!",
             # "Hello there!",
             # "How are you?",
@@ -54,7 +55,7 @@ class TalkAnimation(PetAnimation):
         self.full_message_display_time = 2
 
         # Initialize TTS (singleton)
-        self.tts = PepTalk()
+        self.tts = XTTSVoicePet()
         self.tts_started = False
         self.message_chosen = False
 
@@ -76,9 +77,7 @@ class TalkAnimation(PetAnimation):
             self.message_sent
             and time.time() - self.last_message_time > self.full_message_display_time
         )
-        tts_finished = (
-            self.tts.is_finished(self.animation_id) if self.tts_started else True
-        )
+        tts_finished = self.tts.is_finished() if self.tts_started else True
 
         return message_display_finished and tts_finished
 
@@ -117,7 +116,8 @@ class TalkAnimation(PetAnimation):
                 print(
                     f"TalkAnimation {self.animation_id}: TTS message will be: {tts_message}"
                 )
-                self.tts.speech(tts_message, speaker_id=self.animation_id)
+                # self.tts.speech(tts_message, speaker_id=self.animation_id)
+                self.tts.speak(tts_message)
                 self.tts_started = True
             if self.tts_started:
                 if self.current_message_index < len(self.current_message) - 1:

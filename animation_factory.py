@@ -18,13 +18,21 @@ class AnimationFactory:
     _mirror_mirror = MirrorMirror()
 
     @classmethod
-    def setup_listen(cls):
+    def init_listen(cls):
         """Setup the listen animation"""
         if "ListenAnimation" in cls._instances:
             print("ListenAnimation already set up, skipping setup")
             return
         cls._instances["ListenAnimation"] = ListenAnimation()
         cls._instances["ListenAnimation"].cycle = 0
+
+    @classmethod
+    def init_talk(cls):
+        if "TalkAnimation" in cls._instances:
+            print("TalkAnimation already set up, skipping setup")
+            return
+        cls._instances["TalkAnimation"] = TalkAnimation()
+        cls._instances["TalkAnimation"].cycle = 0
 
     @classmethod
     def get_animation(cls, animation_class):

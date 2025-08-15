@@ -1,22 +1,41 @@
 import os
 import sys
+import threading
 import time
 from RealtimeTTS import TextToAudioStream, CoquiEngine
 
 
 class XTTSVoicePet:
-    def __init__(self, voice_sample_paths):
+    def __init__(self, voice_sample_paths: list = None):
         """
         Initializes the XTTS-v2 model via the RealtimeTTS CoquiEngine.
 
         Args:
             voice_sample_paths (list): List of paths to voice samples for cloning.
         """
-        # Check for valid voice sample paths
-        if not voice_sample_paths or not all(
-            os.path.exists(p) for p in voice_sample_paths
-        ):
+        # If no specific sample paths provided, use bundled defaults
+        if voice_sample_paths is None:
+            voice_sample_paths = [
+                os.path.join(os.path.dirname(__file__), "first.wav"),
+                os.path.join(os.path.dirname(__file__), "second.wav"),
+                os.path.join(os.path.dirname(__file__), "third.wav"),
+                os.path.join(os.path.dirname(__file__), "fourth.wav"),
+            ]
+
+        # Resolve relative paths (allow passing just filenames) and validate existence
+        resolved_paths = []
+        base_dir = os.path.dirname(__file__)
+        for p in voice_sample_paths:
+            if not os.path.isabs(p):
+                candidate = os.path.join(base_dir, p)
+            else:
+                candidate = p
+            resolved_paths.append(candidate)
+
+        if not resolved_paths or not all(os.path.exists(p) for p in resolved_paths):
             raise FileNotFoundError("One or more voice sample files not found.")
+
+        voice_sample_paths = resolved_paths
 
         print(f"Using {len(voice_sample_paths)} voice sample(s) for cloning.")
 
@@ -44,14 +63,28 @@ class XTTSVoicePet:
         # Streaming manager
         self.stream = TextToAudioStream(self.engine)
         print("-" * 50)
+        self.speaking = False
+
+    def is_finished(self):
+        return not self.speaking
 
     def speak(self, text):
+        if not self.speaking:
+            self.speaking = True
+            thread = threading.Thread(target=self._speak_async, args=(text,))
+            thread.daemon = True
+            thread.start()
+        else:
+            print("🔊 Already speaking, please wait.")
+
+    def _speak_async(self, text):
         """
         Feeds text into the streaming system for real-time playback.
 
         Args:
             text (str): The text to be spoken.
         """
+
         if not text.strip():
             return
 
@@ -68,6 +101,7 @@ class XTTSVoicePet:
         print("✅ Streaming completed.")
         # Explicitly close the stream here.
         # self.stream.close()
+        self.speaking = False
 
 
 if __name__ == "__main__":
@@ -82,13 +116,19 @@ if __name__ == "__main__":
     try:
         pet = XTTSVoicePet(voice_sample_paths=voice_samples)
 
-        while True:
-            user_input = input("\nAsk your pet a question (or 'quit' to exit): ")
+        # while True:
+        #     # user_input = input("\nAsk your pet a question (or 'quit' to exit): ")
 
-            if user_input.lower() == "quit":
-                break
+        #     # if user_input.lower() == "quit":
+        #     #     break
 
-            pet.speak(user_input)
+        #     # pet.speak(user_input)
+        for i in range(200):
+            print(f"Hello, this is message number {i + 1}")
+            time.sleep(1)
+            pet.speak(
+                f"This is another message, with the number {i + 1}. Before this finishes no new messages shall be played! After this the speaking flag should be false."
+            )
 
     except FileNotFoundError as e:
         print(f"❌ Error: {e}")
