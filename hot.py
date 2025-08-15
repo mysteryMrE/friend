@@ -25,7 +25,7 @@ class Hot:
         flag: threading.Event = None,
     ):
         # Auto-detect microphone if not specified
-        self.mic_index = 0
+        self.mic_index = mic_index
 
         print(f"Using microphone index: {self.mic_index}")
         self.access_key = access_key

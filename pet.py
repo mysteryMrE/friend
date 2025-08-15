@@ -97,7 +97,7 @@ class Pet:
         AnimationFactory.setup_listen()
         self.wait_for_callback = threading.Event()
         self.hot = Hot(
-            mic_index=1,
+            mic_index=0,
             access_key=access_key,  # Access key can be set later if needed
             flag=self.wait_for_callback,
             custom_keyword_paths=custom_keyword_paths,

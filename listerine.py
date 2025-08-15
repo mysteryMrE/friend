@@ -12,10 +12,18 @@ class Language(Enum):
 
 
 class SpeechToText:
-    def __init__(self, mic_index: int = 1, adjust_once: bool = True):
+    def __init__(
+        self,
+        from_where: str,
+        mic_index: int = 1,
+        adjust_once: bool = True,
+    ):
+        print(
+            f"Initializing SpeechToText with mic index: {mic_index}, adjust_once: {adjust_once}, from: {from_where}"
+        )
         self.recognizer = sr.Recognizer()
         self.recognizer.pause_threshold = 1.0
-        self.mic_index = mic_index
+        self.mic_index = mic_index  # mic_index
 
         # if adjust_once:
         #     with sr.Microphone(device_index=self.mic_index) as source:
