@@ -1,0 +1,10 @@
+py -3.10 -m venv venv
+pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install realtimetts[coqui]
+pip install numpy soundfile 
+pip install pvporcupine
+pvrecorder
+python-dotenv
+SpeechRecognition
+fuzzywuzzy
+Levenshtein
