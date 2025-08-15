@@ -25,7 +25,7 @@ class Hot:
         flag: threading.Event = None,
     ):
         # Auto-detect microphone if not specified
-        self.mic_index = mic_index
+        self.mic_index = 0
 
         print(f"Using microphone index: {self.mic_index}")
         self.access_key = access_key
@@ -40,6 +40,7 @@ class Hot:
 
         # Callback for when wake word is detected
         self._wake_word_callback = wake_word_callback
+        self._find_working_microphone()
 
     def start_listening(self):
         """Start listening for wake words in a background thread"""
