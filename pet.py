@@ -96,6 +96,7 @@ class Pet:
         self._updating = False  # Flag to prevent recursive updates
         AnimationFactory.init_listen()
         AnimationFactory.init_talk()
+        AnimationFactory.init_mirror_mirror()
         self.wait_for_callback = threading.Event()
         self.hot = Hot(
             mic_index=0,

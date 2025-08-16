@@ -1,5 +1,6 @@
 from fuzzywuzzy import fuzz
 
+from chatgpt import ChatGPT
 from pet_states.comeback import ComeBackAnimation
 from pet_states.hide import HideAnimation
 from pet_states.lie_down import LieDownAnimation
@@ -61,6 +62,7 @@ class MirrorMirror:
         self.default_answer = default_answer
         self.listen_again = False
         self.force_state = None
+        self.chat_gpt = ChatGPT()
 
     def is_rebound(self):
         """Check if we should rebound to listening again (and reset the flag)"""
@@ -82,6 +84,11 @@ class MirrorMirror:
         if query is None:
             self.listen_again = True
             return self.default_answer
+        if query.split()[0].lower() == "question" and len(query.split()) > 1:
+            response = self.chat_gpt.generate_response(" ".join(query.split()[1:]))
+            self.force_state = None
+            self.listen_again = False
+            return response
         highest_score = 0
         normalized_query = query.lower().strip()
 

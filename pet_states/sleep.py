@@ -11,3 +11,6 @@ class SleepAnimation(PetAnimation):
             animation_speed=0.3,
             animation_repeat=2,
         )
+
+    def is_finished(self):
+        return False  # Sleep animation never finishes, have to wake it up

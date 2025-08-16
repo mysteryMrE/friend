@@ -15,7 +15,16 @@ class AnimationFactory:
 
     _instances = {}
 
-    _mirror_mirror = MirrorMirror()
+    _mirror_mirror = None
+
+    @classmethod
+    def init_mirror_mirror(cls):
+        """Setup the MirrorMirror instance"""
+        if cls._mirror_mirror is None:
+            cls._mirror_mirror = MirrorMirror()
+            print("MirrorMirror instance created")
+        else:
+            print("MirrorMirror instance already exists, skipping setup")
 
     @classmethod
     def init_listen(cls):

@@ -130,7 +130,7 @@ class TalkAnimation(PetAnimation):
                     ):
                         self.last_message_time = time.time()
                         if self.last_message[-1] in [".", "!", "?"]:
-                            self.last_message_time = time.time() + 1
+                            self.last_message_time = time.time() + 0.2
                     self.current_message_index += 1
                     return self.last_message
                 else:
